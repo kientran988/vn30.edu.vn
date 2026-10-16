@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>VN30.EDU.VN - Đấu Trường Phái Sinh Giả Lập</title>
+    <!-- Nhúng thư viện biểu đồ nến chuyên nghiệp của TradingView -->
+    <script src="https://unpkg.com"></script>
+    <style>
+        body { background-color: #131722; color: white; font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; margin: 0; }
+        .wrapper { max-width: 1200px; margin: 0 auto; position: relative; }
+        .container { display: flex; gap: 20px; margin-top: 20px; }
+        .chart-area { width: 70%; display: flex; flex-direction: column; gap: 15px; }
+        #chart { width: 100%; height: 360px; background: #1c2030; border-radius: 8px; border: 1px solid #2a2e39; }
+        #rsi-chart { width: 100%; height: 120px; background: #1c2030; border-radius: 8px; border: 1px solid #2a2e39; }
+        .trade-panel { width: 30%; background: #1c2030; padding: 20px; border-radius: 8px; border: 1px solid #2a2e39; box-sizing: border-box;}
+        
+        /* 🔔 HỘP THOẠI NHẮC NHỞ SMART ALERT */
+        #alert-box { position: fixed; top: 20px; right: -350px; width: 300px; padding: 15px; border-radius: 8px; font-weight: bold; z-index: 10000; transition: right 0.5s ease-in-out; box-shadow: 0px 4px 15px rgba(0,0,0,0.5); }
+        .alert-success { background-color: #26a69a; color: white; border-left: 6px solid #004d40; }
+        .alert-warning { background-color: #f0b90b; color: #131722; border-left: 6px solid #b78103; }
+
+        /* 🔒 FORM ĐĂNG KÝ CHẶN MÀN HÌNH */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(19, 23, 34, 0.98); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .modal-box { background: #1c2030; padding: 35px; border-radius: 12px; width: 340px; border: 1px solid #2a2e39; }
+        .input-group { margin-bottom: 18px; }
+        .input-group label { display: block; font-size: 13px; color: #848e9c; margin-bottom: 6px; }
+        .input-group input { width: 93%; padding: 12px; background: #131722; border: 1px solid #2a2e39; color: white; border-radius: 6px; font-size: 15px; }
+        
+        /* NÚT BẤM VÀ THÔNG TIN GIAO DIỆN */
+        .btn { width: 100%; padding: 14px; margin: 8px 0; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; font-size: 16px; }
+        .btn-long { background-color: #26a69a; color: white; }
+        .btn-short { background-color: #ef5350; color: white; }
+        .btn-gold { background-color: #f0b90b; color: #131722; font-weight: 900; }
+        .leverage-container { margin: 15px 0; background: #131722; padding: 12px; border-radius: 6px; border: 1px solid #2a2e39; }
+        .slider { width: 100%; -webkit-appearance: none; background: #2a2e39; height: 6px; border-radius: 3px; }
+        .slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #f0b90b; cursor: pointer; }
+        .info-row { display: flex; justify-content: space-between; margin: 10px 0; font-size: 14px; border-bottom: 1px solid #2a2e39; padding-bottom: 6px;}
+        .highlight { color: #f0b90b; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <!-- 🔔 Hộp thoại nhắc nhở ẩn -->
+    <div id="alert-box" class="alert-success">Thông báo!</div>
+
+    <!-- 🔒 Form Đăng ký thu thập dữ liệu -->
+    <div id="auth-modal" class="modal-overlay">
+        <div class="modal-box">
+            <h2 style="text-align: center; color: #f0b90b; margin-top: 0; letter-spacing: 1px;">VN30.EDU.VN</h2>
+            <p style="text-align: center; font-size: 13px; color: #848e9c; margin-bottom: 25px;">Học Tập An Toàn - Đua Top Nhận Quà Thật</p>
+            <div class="input-group">
+                <label>1. Tên hiển thị đua top:</label>
+                <input type="text" id="reg-name" placeholder="Ví dụ: CaoThuPhaiSinh">
+            </div>
+            <div class="input-group">
+                <label>2. Số điện thoại (Kết bạn Zalo trao giải):</label>
+                <input type="tel" id="reg-phone" placeholder="Ví dụ: 0912345xxx">
+            </div>
+            <div class="input-group">
+                <label>3. Mật khẩu tài khoản:</label>
+                <input type="password" id="reg-pass" placeholder="••••••••">
+            </div>
+            <button class="btn btn-gold" onclick="handleRegister()">KÍCH HOẠT NHẬN 100 TRIỆU VỐN ẢO 🚀</button>
+        </div>
+    </div>
+
+    <!-- 💻 Giao diện Sàn chính -->
+    <div class="wrapper">
+        <!-- Thiết kế Thanh Header chứa Brand Logo -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid #2a2e39;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="background: linear-gradient(135deg, #26a69a, #f0b90b); width: 35px; height: 35px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 18px;">📊</div>
+                <div>
+                    <span style="font-size: 22px; font-weight: 900; color: white; letter-spacing: 0.5px;">VN30</span>
+                    <span style="font-size: 13px; color: #f0b90b; font-weight: bold; display: block; margin-top: -5px;">.EDU.VN</span>
+                </div>
+            </div>
+            <div style="font-size: 16px;">Giá Chỉ Số VN30: <strong id="live-price" style="color:#f0b90b; background:#2a2e39; padding:5px 10px; border-radius:4px; margin-left:5px;">1,300.00</strong></div>
+        </div>
+        
+        <div class="container">
+            <!-- Khu vực đồ thị nến + RSI phân tích kỹ thuật -->
+            <div class="chart-area">
+                <div id="chart"></div>
+                <div id="rsi-chart"></div>
+            </div>
+
+            <!-- Bảng đặt lệnh tối giản -->
+            <div class="trade-panel">
+                <h3 style="margin-top:0; color:#f0b90b;">👤 TRADER: <span id="user-display" style="color:white;">Ẩn danh</span></h3>
+                <div class="info-row"><span>Số dư vốn ảo:</span> <span id="balance">100,000,000</span>đ</div>
+                <div class="info-row"><span>Vị thế hiện tại:</span> <span id="position" class="highlight">0 HĐ</span></div>
+
+                <h3 style="margin-top: 25px; border-top: 1px solid #2a2e39; padding-top: 15px;">⚡ VÀO LỆNH THỰC HÀNH</h3>
+                <label style="font-size: 13px; color:#848e9c;">Số lượng hợp đồng (HĐ):</label>
+                <input type="number" id="qty" value="1" min="1" oninput="calculateMargin()" style="width:92%; padding:10px; margin-top:6px; background:#131722; color:white; border:1px solid #2a2e39; border-radius:4px; font-size:16px;">
+                
+                <!-- Thanh trượt chọn đòn bẩy -->
+                <div class="leverage-container">
+                    <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:bold; margin-bottom:5px;">
+                        <span>Điều chỉnh Đòn bẩy:</span>
+                        <span id="leverage-val" class="highlight">x10</span>
+                    </div>
+                    <input type="range" min="1" max="50" value="10" class="slider" id="leverage-range" oninput="updateLeverage(this.value)">
+                </div>
+
+                <div class="info-row" style="border:none; margin-bottom:15px;">
+                    <span style="font-size: 13px; color:#848e9c;">Ký quỹ tạm tính:</span>
+                    <span id="required-margin" class="highlight">13,000,000đ</span>
+                </div>
+
+                <button class="btn btn-long" onclick="triggerOrder('MUA LONG')">MUA LONG ↑</button>
+                <button class="btn btn-short" onclick="triggerOrder('BÁN SHORT')">BÁN SHORT ↓</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPrice = 1300.0;
+        let currentLeverage = 10;
+
+        // Xử lý Đăng ký người dùng
+        function handleRegister() {
+            const name = document.getElementById('reg-name').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+            const pass = document.getElementById('reg-pass').value.trim();
+            if(!name || !phone || !pass) { alert("Vui lòng điền đủ 3 thông tin để nhận 100M VND ảo nhé!"); return; }
+            
+            document.getElementById('auth-modal').style.display = 'none';
+            document.getElementById('user-display').innerText = name;
+            showNotification('success', `🎉 Chào mừng ${name} gia nhập đấu trường VN30.EDU.VN!`);
+        }
+
+        // Hiện thông báo Smart Alert trượt từ góc phải
+        function showNotification(type, message) {
+            const box = document.getElementById('alert-box');
+            box.innerText = message;
+            box.className = type === 'success' ? 'alert-box alert-success' : 'alert-box alert-warning';
+            box.style.right = '20px';
+            setTimeout(() => { box.style.right = '-350px'; }, 4000);
+        }
+
+        function triggerOrder(side) {
+            const qty = document.getElementById('qty').value;
+            showNotification('success', `✅ Khớp thành công lệnh ${side} ${qty} HĐ tại giá ${currentPrice.toFixed(2)}`);
+        }
+
+        function updateLeverage(val) {
+            currentLeverage = val;
+            document.getElementById('leverage-val').innerText = "x" + val;
+            calculateMargin();
+        }
+
+        function calculateMargin() {
+            const qty = document.getElementById('qty').value || 0;
+            const marginNeeded = (currentPrice * qty * 100000) / currentLeverage;
+            document.getElementById('required-margin').innerText = Math.round(marginNeeded).toLocaleString('vi-VN') + "đ";
+        }
+
+        // ... các đoạn code phía trên ...
+
+// KHỞI TẠO BIỂU ĐỒ NẾN REALTIME VÀ CHỈ BÁO KỸ THUẬT
+const chart = LightweightCharts.createChart(document.getElementById('chart'), {
+    layout: { backgroundColor: '#1c2030', textColor: '#d1d4dc' },
+    
+    // ĐOẠN BẠN HỎI NẰM CHÍNH XÁC Ở ĐÂY:
+    grid: { vertLines: { color: 'rgba(42, 46, 57, 0.1)' }, horzLines: { color: 'rgba(42, 46, 57, 0.1)' } },
+    timeScale: { visible: false }
+    // ------------------------------------------
+});
+
+const candleSeries = chart.addCandlestickSeries({ upColor: '#26a69a', downColor: '#ef5350' });
+const maSeries = chart.addLineSeries({ color: '#f0b90b', lineWidth: 1.5, title: 'MA(20)' });
+
+// ... các đoạn code chạy nến và nút bấm phía dưới ...
