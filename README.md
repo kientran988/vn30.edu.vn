@@ -1,0 +1,152 @@
+[index2.html](https://github.com/user-attachments/files/33601554/index2.html)
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>VN30.EDU.VN - Đấu Trường Phái Sinh Gamification</title>
+    <script src="https://unpkg.com"></script>
+    <style>
+        body { background-color: #131722; color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 20px; margin: 0; }
+        .wrapper { max-width: 1200px; margin: 0 auto; position: relative; }
+        .container { display: flex; gap: 20px; margin-top: 20px; }
+        .chart-area { width: 70%; display: flex; flex-direction: column; gap: 15px; }
+        #chart { width: 100%; height: 340px; background: #1c2030; border-radius: 8px; border: 1px solid #2a2e39; }
+        #rsi-chart { width: 100%; height: 110px; background: #1c2030; border-radius: 8px; border: 1px solid #2a2e39; }
+        .trade-panel { width: 30%; background: #1c2030; padding: 20px; border-radius: 8px; border: 1px solid #2a2e39; box-sizing: border-box;}
+        
+        #alert-box { position: fixed; top: 20px; right: -350px; width: 300px; padding: 15px; border-radius: 8px; font-weight: bold; z-index: 10000; transition: right 0.4s ease; box-shadow: 0px 4px 15px rgba(0,0,0,0.5); }
+        .alert-success { background-color: #26a69a; color: white; border-left: 6px solid #004d40; }
+        .alert-warning { background-color: #f0b90b; color: #131722; border-left: 6px solid #b78103; }
+        .alert-danger { background-color: #ef5350; color: white; border-left: 6px solid #b71c1c; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(19, 23, 34, 0.98); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .modal-box { background: #1c2030; padding: 35px; border-radius: 12px; width: 340px; border: 1px solid #2a2e39; }
+        .input-group { margin-bottom: 18px; }
+        .input-group label { display: block; font-size: 13px; color: #848e9c; margin-bottom: 6px; }
+        .input-group input { width: 93%; padding: 12px; background: #131722; border: 1px solid #2a2e39; color: white; border-radius: 6px; font-size: 15px; }
+        
+        .quest-box { background: #131722; padding: 12px; border-radius: 6px; border: 1px solid #2a2e39; margin-bottom: 15px; }
+        .progress-bar-bg { background: #2a2e39; width: 100%; height: 8px; border-radius: 4px; margin-top: 6px; overflow: hidden; }
+        .progress-bar-fill { background: linear-gradient(90deg, #26a69a, #f0b90b); width: 0%; height: 100%; transition: width 0.3s ease; }
+
+        .btn { width: 100%; padding: 14px; margin: 8px 0; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; font-size: 16px; }
+        .btn-long { background-color: #26a69a; color: white; }
+        .btn-short { background-color: #ef5350; color: white; }
+        .btn-gold { background-color: #f0b90b; color: #131722; font-weight: 900; }
+        
+        /* 🕒 NÚT BÁO KHÓA GIẢI ĐẤU KHI CHÁY */
+        .btn-locked { background: #2a2e39; color: #848e9c; cursor: not-allowed; display: none; font-size: 14px; border: 1px solid #ef5350; }
+        
+        .leverage-container { margin: 15px 0; background: #131722; padding: 12px; border-radius: 6px; border: 1px solid #2a2e39; }
+        .slider { width: 100%; -webkit-appearance: none; background: #2a2e39; height: 6px; border-radius: 3px; }
+        .slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #f0b90b; cursor: pointer; }
+        .info-row { display: flex; justify-content: space-between; margin: 10px 0; font-size: 14px; border-bottom: 1px solid #2a2e39; padding-bottom: 6px;}
+        .highlight { color: #f0b90b; font-weight: bold; }
+        .profit { color: #26a69a; font-weight: bold; }
+        .loss { color: #ef5350; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="alert-box" class="alert-success">Thông báo!</div>
+
+    <div id="auth-modal" class="modal-overlay">
+        <div class="modal-box">
+            <h2 style="text-align: center; color: #f0b90b; margin-top: 0; letter-spacing: 1px;">VN30.EDU.VN</h2>
+            <p style="text-align: center; font-size: 13px; color: #848e9c; margin-bottom: 25px;">Học Tập An Toàn - Đua Top Giải Đấu Tuần</p>
+            <div class="input-group">
+                <label>1. Tên hiển thị đua top:</label>
+                <input type="text" id="reg-name" placeholder="Ví dụ: CaoThuPhaiSinh">
+            </div>
+            <div class="input-group">
+                <label>2. Số điện thoại (Kết bạn Zalo trao giải):</label>
+                <input type="tel" id="reg-phone" placeholder="Ví dụ: 0912345xxx">
+            </div>
+            <div class="input-group">
+                <label>3. Mật khẩu:</label>
+                <input type="password" id="reg-pass" placeholder="••••••••">
+            </div>
+            <button class="btn btn-gold" onclick="handleRegister()">KÍCH HOẠT NHẬN 100 TRIỆU VỐN ẢO 🚀</button>
+        </div>
+    </div>
+
+    <div class="wrapper">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid #2a2e39;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="background: linear-gradient(135deg, #26a69a, #f0b90b); width: 35px; height: 35px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 18px;">📊</div>
+                <div>
+                    <span style="font-size: 22px; font-weight: 900; color: white; letter-spacing: 0.5px;">VN30</span>
+                    <span style="font-size: 13px; color: #f0b90b; font-weight: bold; display: block; margin-top: -5px;">.EDU.VN</span>
+                </div>
+            </div>
+            <div style="font-size: 16px;">Giá Chỉ Số VN30: <strong id="live-price" style="color:#f0b90b; background:#2a2e39; padding:5px 10px; border-radius:4px; margin-left:5px;">1300.00</strong></div>
+        </div>
+        
+        <div class="container">
+            <div class="chart-area">
+                <div id="chart"></div>
+                <div id="rsi-chart"></div>
+            </div>
+
+            <div class="trade-panel">
+                <h3 style="margin-top:0; color:#f0b90b;">👤 TRADER: <span id="user-display" style="color:white;">Ẩn danh</span></h3>
+                
+                <div class="quest-box">
+                    <div style="display:flex; justify-content:space-between; font-size:12px; color:#848e9c;">
+                        <span>Nhiệm vụ: Tập đi đủ 5 lệnh ngày</span>
+                        <span id="quest-count" class="highlight">0/5</span>
+                    </div>
+                    <div class="progress-bar-bg"><div id="progress-fill" class="progress-bar-fill"></div></div>
+                </div>
+
+                <div class="info-row"><span>Số dư ví:</span> <span id="balance">100,000,000</span>đ</div>
+                <div class="info-row"><span>Vốn sở hữu (Equity):</span> <span id="equity">100,000,000</span>đ</div>
+                <div class="info-row"><span>Lãi/Lỗ tạm tính (PnL):</span> <span id="pnl" class="profit">0đ</span></div>
+                <div class="info-row"><span>Vị thế đang giữ:</span> <span id="position" class="highlight">0 HĐ</span></div>
+
+                <!-- Bảng điều khiển lệnh đặt -->
+                <div id="control-area">
+                    <h3 style="margin-top: 20px; border-top: 1px solid #2a2e39; padding-top: 15px;">⚡ VÀO LỆNH THỰC HÀNH</h3>
+                    <label style="font-size: 13px; color:#848e9c;">Số lượng hợp đồng (HĐ):</label>
+                    <input type="number" id="qty" value="1" min="1" oninput="calculateMargin()" style="width:92%; padding:10px; margin-top:6px; background:#131722; color:white; border:1px solid #2a2e39; border-radius:4px; font-size:16px;">
+                    
+                    <div class="leverage-container">
+                        <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:bold; margin-bottom:5px;">
+                            <span>Đòn bẩy:</span>
+                            <span id="leverage-val" class="highlight">x10</span>
+                        </div>
+                        <input type="range" min="1" max="50" value="10" class="slider" id="leverage-range" oninput="updateLeverage(this.value)">
+                    </div>
+
+                    <div class="info-row" style="border:none; margin-bottom:10px;">
+                        <span>Ký quỹ yêu cầu:</span>
+                        <span id="required-margin" class="highlight">13,000,000đ</span>
+                    </div>
+
+                    <button class="btn btn-long" onclick="placeOrder('BUY')">MUA LONG ↑</button>
+                    <button class="btn btn-short" onclick="placeOrder('SELL')">BÁN SHORT ↓</button>
+                </div>
+
+                <!-- 🕒 NÚT KHÓA CHỜ RESET TUẦN MỚI (CHỈ XUẤT HIỆN KHI CHÁY) -->
+                <button id="btn-locked" class="btn btn-locked" disabled>
+                    ❌ TÀI KHOẢN ĐÃ BỊ CHÁY<br>
+                    <span style="font-size:12px; color:#ef5350;">Đợi Reset vốn vào Thứ Hai tuần sau!</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPrice = 1300.0;
+        let leverage = 10;
+        let balance = 100000000.0; 
+        let positionSize = 0;       
+        let entryPrice = 0.0;
+        let totalOrdersSent = 0;   
+
+        function handleRegister() {
+            const name = document.getElementById('reg-name').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+            const pass = document.getElementById('reg-pass').value.trim();
+            if(!name || !phone || !pass) { alert("Vui lòng điền đủ thông tin!"); return; }
+            document.getElementById('auth-modal').style.display = 'none';
