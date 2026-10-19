@@ -15,7 +15,7 @@
         .trade-panel { width: 30%; background: #1c2030; padding: 20px; border-radius: 8px; border: 1px solid #2a2e39; box-sizing: border-box;}
         
         /* 🔔 HỘP THOẠI NHẮC NHỞ SMART ALERT */
-        #alert-box { position: fixed; top: 20px; right: -350px; width: 300px; padding: 15px; border-radius: 8px; font-weight: bold; z-index: 10000; transition: right 0.4s ease; box-shadow: 0px 4px 15px rgba(0,0,0,0.5); }
+        #alert-box { position: fixed; top: 20px; right: -350px; width: 300px; padding: 15px; border-radius: 8px; font-weight: bold; z-index: 10000; transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0px 4px 15px rgba(0,0,0,0.5); }
         .alert-success { background-color: #26a69a; color: white; border-left: 6px solid #004d40; }
         .alert-warning { background-color: #f0b90b; color: #131722; border-left: 6px solid #b78103; }
         .alert-danger { background-color: #ef5350; color: white; border-left: 6px solid #b71c1c; }
@@ -66,7 +66,7 @@
                 <input type="tel" id="reg-phone" placeholder="Ví dụ: 0912345xxx">
             </div>
             <div class="input-group">
-                <label>3. Mật khẩu:</label>
+                <label>3. Mật khẩu (Tối thiểu 6 ký tự):</label>
                 <input type="password" id="reg-pass" placeholder="••••••••">
             </div>
             <button class="btn btn-gold" onclick="handleRegister()">KÍCH HOẠT NHẬN 100 TRIỆU VỐN ẢO 🚀</button>
@@ -140,7 +140,6 @@
     </div>
 
     <script>
-        // Cố định cấu trúc dữ liệu cơ sở ngay từ ban đầu
         let currentPrice = 1300.0;
         let leverage = 10;
         let balance = 100000000.0; 
@@ -148,6 +147,6 @@
         let entryPrice = 0.0;
         let totalOrdersSent = 0;   
 
-        // 🛡️ LUỒNG ĐĂNG KÝ BẤM LÀ VÀO 100% - TUYỆT ĐỐI KHÔNG CHỜ MẠNG
-        function handleRegister() {
-            const name = document.getElementById('reg-name').value.trim();
+        const API_BASE_URL = 'https://vn30-edu-vn.onrender.com';
+
+        // 🔥 HÀM ĐĂNG KÝ HOÀN CHỈNH: ĐÃ FIX LỖI ĐƯỜNG DẪN ENDPOINT THEO ĐÚNG SWAGGER VÀ CHẠY NGẦM KHÔNG SỢ ĐƠ
