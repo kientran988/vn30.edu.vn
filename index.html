@@ -3,8 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>VN30.EDU.VN - Đấu Trường Phái Sinh Gamification</title>
-    <!-- Nhúng chính xác thư viện nến mượt mà của TradingView -->
-    <script src="https://unpkg.com"></script>
     <style>
         body { background-color: #131722; color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 20px; margin: 0; }
         .wrapper { max-width: 1200px; margin: 0 auto; position: relative; }
@@ -14,25 +12,21 @@
         #rsi-chart { width: 100%; height: 110px; background: #1c2030; border-radius: 8px; border: 1px solid #2a2e39; }
         .trade-panel { width: 30%; background: #1c2030; padding: 20px; border-radius: 8px; border: 1px solid #2a2e39; box-sizing: border-box;}
         
-        /* 🔔 HỘP THOẠI NHẮC NHỞ SMART ALERT */
         #alert-box { position: fixed; top: 20px; right: -350px; width: 300px; padding: 15px; border-radius: 8px; font-weight: bold; z-index: 10000; transition: right 0.4s ease; box-shadow: 0px 4px 15px rgba(0,0,0,0.5); }
         .alert-success { background-color: #26a69a; color: white; border-left: 6px solid #004d40; }
         .alert-warning { background-color: #f0b90b; color: #131722; border-left: 6px solid #b78103; }
         .alert-danger { background-color: #ef5350; color: white; border-left: 6px solid #b71c1c; }
 
-        /* 🔒 FORM ĐĂNG KÝ CHẶN MÀN HÌNH BAN ĐẦU */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(19, 23, 34, 0.98); z-index: 9999; display: flex; align-items: center; justify-content: center; }
         .modal-box { background: #1c2030; padding: 35px; border-radius: 12px; width: 340px; border: 1px solid #2a2e39; }
         .input-group { margin-bottom: 18px; }
         .input-group label { display: block; font-size: 13px; color: #848e9c; margin-bottom: 6px; }
         .input-group input { width: 93%; padding: 12px; background: #131722; border: 1px solid #2a2e39; color: white; border-radius: 6px; font-size: 15px; }
         
-        /* 🎮 ĐÁNH GIÁ NHIỆM VỤ */
         .quest-box { background: #131722; padding: 12px; border-radius: 6px; border: 1px solid #2a2e39; margin-bottom: 15px; }
         .progress-bar-bg { background: #2a2e39; width: 100%; height: 8px; border-radius: 4px; margin-top: 6px; overflow: hidden; }
         .progress-bar-fill { background: linear-gradient(90deg, #26a69a, #f0b90b); width: 0%; height: 100%; transition: width 0.3s ease; }
 
-        /* NÚT BẤM VÀ ĐÒN BẨY */
         .btn { width: 100%; padding: 14px; margin: 8px 0; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; font-size: 16px; transition: 0.2s; }
         .btn-long { background-color: #26a69a; color: white; }
         .btn-short { background-color: #ef5350; color: white; }
@@ -139,15 +133,21 @@
         </div>
     </div>
 
+    <!-- 🌟 THAY ĐỔI CHIẾN THUẬT: ĐƯA TOÀN BỘ LOGIC ĐĂNG KÝ LÊN TRÊN, CÔ LẬP KHỎI BIỂU ĐỒ -->
     <script>
-        // Khởi tạo các giá trị an toàn ngay từ đầu
         let currentPrice = 1300.0;
         let leverage = 10;
         let balance = 100000000.0; 
         let positionSize = 0;       
         let entryPrice = 0.0;
         let totalOrdersSent = 0;   
-        let isRegistered = false; // Cờ bảo vệ: Chặn lỗi tính toán khi chưa vào sàn
+        let isRegistered = false; 
 
         const API_BASE_URL = 'https://onrender.com';
 
+        // Hàm tối cao: Gọi phát ẩn ngay lập tức, bất chấp biểu đồ có tải xong hay không!
+        function handleRegister() {
+            const name = document.getElementById('reg-name').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+            const pass = document.getElementById('reg-pass').value.trim();
+            
