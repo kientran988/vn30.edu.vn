@@ -143,9 +143,29 @@
         let entryPrice = 0.0;
         let totalOrdersSent = 0;   
 
-        function handleRegister() {
-            const name = document.getElementById('reg-name').value.trim();
-            const phone = document.getElementById('reg-phone').value.trim();
-            const pass = document.getElementById('reg-pass').value.trim();
-            if(!name || !phone || !pass) { alert("Vui lòng điền đủ thông tin!"); return; }
+           async function handleRegister() {
+    const name = document.getElementById('reg-name').value.trim();
+    const phone = document.getElementById('reg-phone').value.trim();
+    const pass = document.getElementById('reg-pass').value.trim();
+    if(!name || !phone || !pass) { alert("Vui lòng điền đủ 3 thông tin để nhận 100M VND ảo nhé!"); return; }
+    
+    try {
+        // ĐƯỜNG LINK THỰC TẾ CỦA BẠN ĐÃ ĐƯỢC DÁN CHUẨN XÁC Ở ĐÂY:
+        const response = await fetch('https://onrender.com', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: name, phone_zalo: phone, password: pass })
+        });
+        
+        const result = await response.json();
+        if(response.ok) {
             document.getElementById('auth-modal').style.display = 'none';
+            document.getElementById('user-display').innerText = name;
+            showNotification('success', result.message);
+        } else {
+            alert(result.detail); 
+        }
+    } catch (err) {
+        alert("🚨 Hệ thống đang kết nối tới Máy chủ đám mây Render. Vui lòng đợi từ 30s - 1 phút cho Server khởi động lại (vì bạn đang dùng gói Free) rồi bấm lại nút đăng ký nhé!");
+    }
+}
