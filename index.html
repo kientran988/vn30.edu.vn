@@ -1,153 +1,426 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <title>VN30.EDU.VN - Đấu Trường Phái Sinh Gamification</title>
-    <style>
-        body { background-color: #131722; color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 20px; margin: 0; }
-        .wrapper { max-width: 1200px; margin: 0 auto; position: relative; }
-        .container { display: flex; gap: 20px; margin-top: 20px; }
-        .chart-area { width: 70%; display: flex; flex-direction: column; gap: 15px; }
-        #chart { width: 100%; height: 340px; background: #1c2030; border-radius: 8px; border: 1px solid #2a2e39; }
-        #rsi-chart { width: 100%; height: 110px; background: #1c2030; border-radius: 8px; border: 1px solid #2a2e39; }
-        .trade-panel { width: 30%; background: #1c2030; padding: 20px; border-radius: 8px; border: 1px solid #2a2e39; box-sizing: border-box;}
-        
-        #alert-box { position: fixed; top: 20px; right: -350px; width: 300px; padding: 15px; border-radius: 8px; font-weight: bold; z-index: 10000; transition: right 0.4s ease; box-shadow: 0px 4px 15px rgba(0,0,0,0.5); }
-        .alert-success { background-color: #26a69a; color: white; border-left: 6px solid #004d40; }
-        .alert-warning { background-color: #f0b90b; color: #131722; border-left: 6px solid #b78103; }
-        .alert-danger { background-color: #ef5350; color: white; border-left: 6px solid #b71c1c; }
-
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(19, 23, 34, 0.98); z-index: 9999; display: flex; align-items: center; justify-content: center; }
-        .modal-box { background: #1c2030; padding: 35px; border-radius: 12px; width: 340px; border: 1px solid #2a2e39; }
-        .input-group { margin-bottom: 18px; }
-        .input-group label { display: block; font-size: 13px; color: #848e9c; margin-bottom: 6px; }
-        .input-group input { width: 93%; padding: 12px; background: #131722; border: 1px solid #2a2e39; color: white; border-radius: 6px; font-size: 15px; }
-        
-        .quest-box { background: #131722; padding: 12px; border-radius: 6px; border: 1px solid #2a2e39; margin-bottom: 15px; }
-        .progress-bar-bg { background: #2a2e39; width: 100%; height: 8px; border-radius: 4px; margin-top: 6px; overflow: hidden; }
-        .progress-bar-fill { background: linear-gradient(90deg, #26a69a, #f0b90b); width: 0%; height: 100%; transition: width 0.3s ease; }
-
-        .btn { width: 100%; padding: 14px; margin: 8px 0; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; font-size: 16px; transition: 0.2s; }
-        .btn-long { background-color: #26a69a; color: white; }
-        .btn-short { background-color: #ef5350; color: white; }
-        .btn-gold { background-color: #f0b90b; color: #131722; font-weight: 900; }
-        .btn-locked { background: #2a2e39; color: #848e9c; cursor: not-allowed; display: none; font-size: 14px; border: 1px solid #ef5350; }
-        
-        .leverage-container { margin: 15px 0; background: #131722; padding: 12px; border-radius: 6px; border: 1px solid #2a2e39; }
-        .slider { width: 100%; -webkit-appearance: none; background: #2a2e39; height: 6px; border-radius: 3px; }
-        .slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #f0b90b; cursor: pointer; }
-        .info-row { display: flex; justify-content: space-between; margin: 10px 0; font-size: 14px; border-bottom: 1px solid #2a2e39; padding-bottom: 6px;}
-        .highlight { color: #f0b90b; font-weight: bold; }
-        .profit { color: #26a69a; font-weight: bold; }
-        .loss { color: #ef5350; font-weight: bold; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VN30.EDU.VN - Đấu Trường Phái Sinh</title>
+<style>
+:root{--bg:#131722;--panel:#1c2030;--line:#2a2e39;--muted:#848e9c;--gold:#f0b90b;--green:#26a69a;--red:#ef5350;--text:#f5f7fa}
+*{box-sizing:border-box}
+body{margin:0;padding:20px;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+.wrapper{max-width:1250px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:16px}
+.brand{display:flex;align-items:center;gap:10px}.logo{width:40px;height:40px;border-radius:8px;display:grid;place-items:center;background:linear-gradient(135deg,var(--green),var(--gold));font-size:21px}
+.brand strong{font-size:22px}.brand small{display:block;color:var(--gold);font-weight:bold}
+.price-line{font-size:15px}.price{color:var(--gold);font-weight:bold;background:var(--line);padding:8px 10px;border-radius:6px;display:inline-block;margin-left:5px}
+.notice{margin-top:14px;background:#282318;border:1px solid #6b5714;color:#f8df82;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.5}
+.container{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(300px,1fr);gap:18px;margin-top:18px}
+.chart-area{display:flex;flex-direction:column;gap:14px;min-width:0}
+.chart-card,.trade-panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0}
+.chart-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 10px;font-size:14px}
+.chart-title small{color:var(--muted);font-weight:normal}
+canvas{display:block;width:100%;height:320px}.rsi-canvas{height:120px}
+.trade-panel h3{margin:0 0 15px;color:var(--gold);font-size:17px}
+.quest-box{background:var(--bg);padding:12px;border-radius:7px;border:1px solid var(--line);margin-bottom:15px}
+.quest-top{display:flex;justify-content:space-between;gap:8px;color:var(--muted);font-size:12px}
+.progress-bg{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:8px}.progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--gold));transition:width .25s}
+.info-row{display:flex;justify-content:space-between;gap:12px;margin:10px 0;padding-bottom:8px;border-bottom:1px solid var(--line);font-size:13px}.info-row span:first-child{color:#c0c5ce}.highlight{color:var(--gold);font-weight:bold}.profit{color:var(--green);font-weight:bold}.loss{color:var(--red);font-weight:bold}
+.section-title{margin:20px 0 12px;border-top:1px solid var(--line);padding-top:15px;font-size:15px}
+label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+input{font:inherit}
+.input{width:100%;padding:11px;background:var(--bg);color:white;border:1px solid var(--line);border-radius:6px;outline:none}.input:focus{border-color:var(--gold)}
+.leverage{margin:14px 0;background:var(--bg);padding:12px;border:1px solid var(--line);border-radius:7px}
+.leverage-top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:10px}.slider{width:100%;accent-color:var(--gold)}
+.btn{width:100%;padding:13px;margin:7px 0;border:0;border-radius:6px;font-size:15px;font-weight:bold;cursor:pointer;transition:filter .15s}
+.btn:hover{filter:brightness(1.08)}.btn:disabled{opacity:.65;cursor:wait}.btn-gold{background:var(--gold);color:#131722}.btn-long{background:var(--green);color:white}.btn-short{background:var(--red);color:white}.btn-secondary{background:var(--line);color:white}
+.muted{color:var(--muted);font-size:12px;line-height:1.5}.position-actions{display:flex;gap:8px}.position-actions .btn{flex:1}
+#alert-box{position:fixed;top:18px;right:18px;max-width:min(360px,calc(100vw - 36px));padding:13px 16px;border-radius:8px;z-index:11000;box-shadow:0 8px 30px #0008;display:none;font-weight:600}
+.alert-success{background:var(--green);color:white}.alert-warning{background:var(--gold);color:#131722}.alert-danger{background:var(--red);color:white}
+.modal-overlay{position:fixed;inset:0;background:rgba(12,15,23,.96);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto}
+.modal-box{background:var(--panel);padding:28px;border-radius:12px;width:min(400px,100%);border:1px solid var(--line);box-shadow:0 20px 70px #0008}
+.modal-box h2{text-align:center;color:var(--gold);margin:0 0 8px;letter-spacing:1px}.modal-sub{text-align:center;font-size:13px;color:var(--muted);line-height:1.5;margin:0 0 22px}
+.input-group{margin-bottom:15px}.input-group label{margin-bottom:7px}
+.status{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
+footer{margin-top:18px;color:var(--muted);font-size:12px;line-height:1.6}
+@media(max-width:850px){body{padding:12px}.container{grid-template-columns:1fr}.trade-panel{order:0}.chart-area{order:1}canvas{height:260px}}
+</style>
 </head>
 <body>
+<div id="alert-box" role="status" aria-live="polite"></div>
 
-    <div id="alert-box" class="alert-success">Thông báo!</div>
-
-    <!-- 🔒 Form Đăng ký chặn màn hình ban đầu -->
-    <div id="auth-modal" class="modal-overlay">
-        <div class="modal-box">
-            <h2 style="text-align: center; color: #f0b90b; margin-top: 0; letter-spacing: 1px;">VN30.EDU.VN</h2>
-            <p style="text-align: center; font-size: 13px; color: #848e9c; margin-bottom: 25px;">Học Tập An Toàn - Đua Top Giải Đấu Tuần</p>
-            <div class="input-group">
-                <label>1. Tên hiển thị đua top:</label>
-                <input type="text" id="reg-name" placeholder="Ví dụ: CaoThuPhaiSinh">
-            </div>
-            <div class="input-group">
-                <label>2. Số điện thoại (Kết bạn Zalo nhận thưởng):</label>
-                <input type="tel" id="reg-phone" placeholder="Ví dụ: 0912345xxx">
-            </div>
-            <div class="input-group">
-                <label>3. Mật khẩu:</label>
-                <input type="password" id="reg-pass" placeholder="••••••••">
-            </div>
-            <button class="btn btn-gold" onclick="handleRegister()">KÍCH HOẠT NHẬN 100 TRIỆU VỐN ẢO 🚀</button>
-        </div>
+<div id="auth-modal" class="modal-overlay">
+  <form id="register-form" class="modal-box">
+    <h2>VN30.EDU.VN</h2>
+    <p class="modal-sub">Đấu trường thực hành phái sinh<br>Đăng ký để nhận 100 triệu đồng vốn ảo</p>
+    <div class="input-group">
+      <label for="reg-name">Tên hiển thị đua top</label>
+      <input class="input" type="text" id="reg-name" name="username" minlength="2" maxlength="20" placeholder="Ví dụ: CaoThuPhaiSinh" autocomplete="nickname" required>
     </div>
-
-    <div class="wrapper">
-        <!-- Header -->
-        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid #2a2e39;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="background: linear-gradient(135deg, #26a69a, #f0b90b); width: 35px; height: 35px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 18px;">📊</div>
-                <div>
-                    <span style="font-size: 22px; font-weight: 900; color: white; letter-spacing: 0.5px;">VN30</span>
-                    <span style="font-size: 13px; color: #f0b90b; font-weight: bold; display: block; margin-top: -5px;">.EDU.VN</span>
-                </div>
-            </div>
-            <div style="font-size: 16px;">Giá Chỉ Số VN30: <strong id="live-price" style="color:#f0b90b; background:#2a2e39; padding:5px 10px; border-radius:4px; margin-left:5px;">1300.00</strong></div>
-        </div>
-        
-        <div class="container">
-            <div class="chart-area">
-                <div id="chart"></div>
-                <div id="rsi-chart"></div>
-            </div>
-
-            <!-- Bảng điều khiển Trading Panel -->
-            <div class="trade-panel">
-                <h3 style="margin-top:0; color:#f0b90b;">👤 TRADER: <span id="user-display" style="color:white;">Ẩn danh</span></h3>
-                
-                <div class="quest-box">
-                    <div style="display:flex; justify-content:space-between; font-size:12px; color:#848e9c;">
-                        <span>Nhiệm vụ: Tập đi đủ 5 lệnh ngày</span>
-                        <span id="quest-count" class="highlight">0/5</span>
-                    </div>
-                    <div class="progress-bar-bg"><div id="progress-fill" class="progress-bar-fill"></div></div>
-                </div>
-
-                <div class="info-row"><span>Số dư ví:</span> <span id="balance">100,000,000</span>đ</div>
-                <div class="info-row"><span>Vốn sở hữu (Equity):</span> <span id="equity">100,000,000</span>đ</div>
-                <div class="info-row"><span>Lãi/Lỗ tạm tính (PnL):</span> <span id="pnl" class="profit">0đ</span></div>
-                <div class="info-row"><span>Vị thế đang nắm giữ:</span> <span id="position" class="highlight">0 HĐ</span></div>
-
-                <div id="control-area">
-                    <h3 style="margin-top: 20px; border-top: 1px solid #2a2e39; padding-top: 15px;">⚡ VÀO LỆNH THỰC HÀNH</h3>
-                    <label style="font-size: 13px; color:#848e9c;">Số lượng hợp đồng (HĐ):</label>
-                    <input type="number" id="qty" value="1" min="1" oninput="calculateMargin()" style="width:92%; padding:10px; margin-top:6px; background:#131722; color:white; border:1px solid #2a2e39; border-radius:4px; font-size:16px;">
-                    
-                    <div class="leverage-container">
-                        <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:bold; margin-bottom:5px;">
-                            <span>Đòn bẩy:</span>
-                            <span id="leverage-val" class="highlight">x10</span>
-                        </div>
-                        <input type="range" min="1" max="50" value="10" class="slider" id="leverage-range" oninput="updateLeverage(this.value)">
-                    </div>
-
-                    <div class="info-row" style="border:none; margin-bottom:10px;">
-                        <span style="font-size: 13px; color:#848e9c;">Ký quỹ yêu cầu:</span>
-                        <span id="required-margin" class="highlight">13,000,000đ</span>
-                    </div>
-
-                    <button class="btn btn-long" onclick="placeOrder('BUY')">MUA LONG ↑</button>
-                    <button class="btn btn-short" onclick="placeOrder('SELL')">BÁN SHORT ↓</button>
-                </div>
-
-                <button id="btn-locked" class="btn btn-locked" disabled>
-                    ❌ TÀI KHOẢN ĐÃ BỊ CHÁY<br>
-                    <span style="font-size:12px; color:#ef5350;">Đợi Reset vốn vào Thứ Hai tuần sau!</span>
-                </button>
-            </div>
-        </div>
+    <div class="input-group">
+      <label for="reg-phone">Số điện thoại (10 chữ số)</label>
+      <input class="input" type="tel" id="reg-phone" name="phone" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="Ví dụ: 0912345678" autocomplete="tel" required>
     </div>
+    <div class="input-group">
+      <label for="reg-pass">Mật khẩu (ít nhất 8 ký tự)</label>
+      <input class="input" type="password" id="reg-pass" name="password" minlength="8" maxlength="128" placeholder="Tạo mật khẩu" autocomplete="new-password" required>
+    </div>
+    <button id="register-button" class="btn btn-gold" type="submit">KÍCH HOẠT NHẬN 100 TRIỆU VỐN ẢO 🚀</button>
+    <p class="muted">Thông tin đăng ký sẽ được gửi đến máy chủ VN30 trên Render. Không nhập mật khẩu bạn đang dùng cho tài khoản quan trọng khác.</p>
+    <div id="register-status" class="status"></div>
+  </form>
+</div>
 
-    <!-- 🌟 THAY ĐỔI CHIẾN THUẬT: ĐƯA TOÀN BỘ LOGIC ĐĂNG KÝ LÊN TRÊN, CÔ LẬP KHỎI BIỂU ĐỒ -->
-    <script>
-        let currentPrice = 1300.0;
-        let leverage = 10;
-        let balance = 100000000.0; 
-        let positionSize = 0;       
-        let entryPrice = 0.0;
-        let totalOrdersSent = 0;   
-        let isRegistered = false; 
+<div class="wrapper">
+<header>
+  <div class="brand"><div class="logo">📊</div><div><strong>VN30</strong><small>.EDU.VN</small></div></div>
+  <div class="price-line">Giá VN30 mô phỏng <span id="live-price" class="price">1300.00</span></div>
+</header>
+<div class="notice"><strong>Chế độ học tập:</strong> Biểu đồ và giá trong file này là dữ liệu mô phỏng để thực hành, không phải báo giá VN30 thời gian thực. Số dư là vốn ảo, không phải tiền thật.</div>
 
-        const API_BASE_URL = 'https://onrender.com';
+<div class="container">
+  <main class="chart-area">
+    <section class="chart-card">
+      <h2 class="chart-title">Biểu đồ nến VN30 <small id="chart-status">Dữ liệu mô phỏng</small></h2>
+      <canvas id="chart" aria-label="Biểu đồ nến mô phỏng"></canvas>
+    </section>
+    <section class="chart-card">
+      <h2 class="chart-title">RSI (mô phỏng) <small>Thang 0–100</small></h2>
+      <canvas id="rsi-chart" class="rsi-canvas" aria-label="Biểu đồ RSI mô phỏng"></canvas>
+    </section>
+    <section class="chart-card">
+      <h2 class="chart-title">Lịch sử lệnh trong phiên</h2>
+      <div id="trade-history" class="muted">Chưa có lệnh nào.</div>
+    </section>
+  </main>
 
-        // Hàm tối cao: Gọi phát ẩn ngay lập tức, bất chấp biểu đồ có tải xong hay không!
-        function handleRegister() {
-            const name = document.getElementById('reg-name').value.trim();
-            const phone = document.getElementById('reg-phone').value.trim();
-            const pass = document.getElementById('reg-pass').value.trim();
-            
+  <aside class="trade-panel">
+    <h3>👤 TRADER: <span id="user-display" style="color:white">Chưa đăng nhập</span></h3>
+    <div class="quest-box">
+      <div class="quest-top"><span>Nhiệm vụ: Thực hành 5 lệnh</span><span id="quest-count" class="highlight">0/5</span></div>
+      <div class="progress-bg"><div id="progress-fill" class="progress-fill"></div></div>
+    </div>
+    <div class="info-row"><span>Số dư ví</span><span id="balance" class="highlight">100,000,000đ</span></div>
+    <div class="info-row"><span>Vốn sở hữu (Equity)</span><span id="equity" class="highlight">100,000,000đ</span></div>
+    <div class="info-row"><span>Lãi/Lỗ tạm tính</span><span id="pnl" class="profit">0đ</span></div>
+    <div class="info-row"><span>Vị thế đang giữ</span><span id="position" class="highlight">0 HĐ</span></div>
+
+    <h3 class="section-title">⚡ Vào lệnh thực hành</h3>
+    <label for="qty">Số lượng hợp đồng (HĐ)</label>
+    <input class="input" type="number" id="qty" value="1" min="1" max="100" step="1">
+    <div class="leverage">
+      <div class="leverage-top"><span>Đòn bẩy mô phỏng</span><span id="leverage-val" class="highlight">x10</span></div>
+      <input type="range" min="1" max="50" value="10" class="slider" id="leverage-range">
+    </div>
+    <div class="info-row"><span>Ký quỹ ước tính</span><span id="required-margin" class="highlight">13,000,000đ</span></div>
+    <p class="muted">Mô hình đơn giản: giá trị danh nghĩa = chỉ số × 100.000đ × số hợp đồng. Ký quỹ = giá trị danh nghĩa / đòn bẩy. Đây chỉ là giả lập giáo dục, không phải công thức ký quỹ chính thức.</p>
+    <button class="btn btn-long" id="buy-button" type="button">MUA LONG ↑</button>
+    <button class="btn btn-short" id="sell-button" type="button">BÁN SHORT ↓</button>
+    <div class="position-actions">
+      <button class="btn btn-secondary" id="close-button" type="button">Đóng vị thế</button>
+      <button class="btn btn-secondary" id="reset-button" type="button">Reset phiên</button>
+    </div>
+    <p class="muted">Lệnh và số dư giao dịch trên trang này được mô phỏng trong trình duyệt hiện tại; chưa được lưu vào tài khoản Supabase. Không chia sẻ thông tin quản trị máy chủ cho người chơi.</p>
+  </aside>
+</div>
+<footer>VN30.EDU.VN — Môi trường thực hành. Đăng ký tài khoản được lưu qua API backend; giá, biểu đồ, lệnh và P/L trên trang này chỉ là mô phỏng phía trình duyệt.</footer>
+</div>
+
+<script>
+'use strict';
+
+const API_BASE_URL = 'https://vn30-edu-vn.onrender.com';
+const INITIAL_BALANCE = 100000000;
+const CONTRACT_MULTIPLIER = 100000;
+let currentPrice = 1300;
+let leverage = 10;
+let balance = INITIAL_BALANCE;
+let positionQty = 0; // positive = long, negative = short
+let entryPrice = 0;
+let tradeCount = 0;
+let candles = [];
+let rsiValues = [];
+let notificationTimer = null;
+
+const $ = (id) => document.getElementById(id);
+const money = (value) => Math.round(value).toLocaleString('vi-VN') + 'đ';
+
+function notify(message, type = 'success') {
+  const box = $('alert-box');
+  box.textContent = message;
+  box.className = type === 'danger' ? 'alert-danger' : type === 'warning' ? 'alert-warning' : 'alert-success';
+  box.style.display = 'block';
+  clearTimeout(notificationTimer);
+  notificationTimer = setTimeout(() => { box.style.display = 'none'; }, 3800);
+}
+
+async function handleRegister(event) {
+  event.preventDefault();
+  const name = $('reg-name').value.trim();
+  const phone = $('reg-phone').value.trim();
+  const password = $('reg-pass').value;
+  const button = $('register-button');
+  const statusEl = $('register-status');
+
+  if (name.length < 2 || name.length > 20) {
+    alert('Tên hiển thị cần từ 2 đến 20 ký tự.'); return;
+  }
+  if (!/^[0-9]{10}$/.test(phone)) {
+    alert('Số điện thoại cần đúng 10 chữ số.'); return;
+  }
+  if (password.length < 8) {
+    alert('Mật khẩu cần ít nhất 8 ký tự.'); return;
+  }
+
+  button.disabled = true;
+  button.textContent = 'ĐANG GỬI THÔNG TIN...';
+  statusEl.textContent = 'Đang kết nối tới máy chủ. Nếu Render đang ngủ, lần đầu có thể mất một lúc.';
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 90000);
+    let response;
+    try {
+      response = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: name, phone_zalo: phone, password }),
+        signal: controller.signal
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    const raw = await response.text();
+    let result = {};
+    try { result = raw ? JSON.parse(raw) : {}; }
+    catch { throw new Error(`Máy chủ trả phản hồi không hợp lệ (HTTP ${response.status}).`); }
+
+    if (!response.ok) {
+      const detail = Array.isArray(result.detail)
+        ? result.detail.map(item => item.msg || 'Dữ liệu không hợp lệ').join('; ')
+        : result.detail;
+      throw new Error(detail || result.message || `HTTP ${response.status}`);
+    }
+
+    const registeredName = result.data?.username || name;
+    const startingBalance = Number(result.data?.balance ?? INITIAL_BALANCE);
+    $('user-display').textContent = registeredName;
+    balance = Number.isFinite(startingBalance) ? startingBalance : INITIAL_BALANCE;
+    positionQty = 0;
+    entryPrice = 0;
+    tradeCount = 0;
+    $('auth-modal').style.display = 'none';
+    updateUI();
+    notify(result.message || 'Đăng ký thành công! Bạn đã nhận 100 triệu vốn ảo.');
+  } catch (error) {
+    console.error('VN30 register error:', error);
+    let message = error.message || 'Không rõ nguyên nhân.';
+    if (error.name === 'AbortError') {
+      message = 'Máy chủ phản hồi quá lâu. Hãy kiểm tra trạng thái Render rồi thử lại.';
+    } else if (error instanceof TypeError) {
+      message = 'Không thể gọi API. Kiểm tra kết nối mạng, CORS và trạng thái Render.';
+    }
+    statusEl.textContent = 'Đăng ký chưa thành công: ' + message;
+    alert('Đăng ký chưa thành công:\n' + message);
+  } finally {
+    button.disabled = false;
+    button.textContent = 'KÍCH HOẠT NHẬN 100 TRIỆU VỐN ẢO 🚀';
+  }
+}
+
+function unrealizedPnL() {
+  if (positionQty === 0) return 0;
+  return (currentPrice - entryPrice) * positionQty * CONTRACT_MULTIPLIER;
+}
+function equity() { return balance + unrealizedPnL(); }
+
+function calculateMargin() {
+  const qty = Math.max(1, Math.min(100, Math.floor(Number($('qty').value) || 1)));
+  const notional = currentPrice * CONTRACT_MULTIPLIER * qty;
+  $('required-margin').textContent = money(notional / leverage);
+}
+function updateUI() {
+  const pnl = unrealizedPnL();
+  $('live-price').textContent = currentPrice.toFixed(2);
+  $('balance').textContent = money(balance);
+  $('equity').textContent = money(equity());
+  $('pnl').textContent = (pnl > 0 ? '+' : '') + money(pnl);
+  $('pnl').className = pnl >= 0 ? 'profit' : 'loss';
+  $('position').textContent = positionQty === 0
+    ? '0 HĐ'
+    : `${positionQty > 0 ? 'LONG ' : 'SHORT '}${Math.abs(positionQty)} HĐ @ ${entryPrice.toFixed(2)}`;
+  $('quest-count').textContent = `${Math.min(tradeCount, 5)}/5`;
+  $('progress-fill').style.width = `${Math.min(tradeCount, 5) * 20}%`;
+  $('leverage-val').textContent = `x${leverage}`;
+  calculateMargin();
+}
+function getQty() {
+  const qty = Number($('qty').value);
+  if (!Number.isInteger(qty) || qty < 1 || qty > 100) {
+    alert('Số hợp đồng phải là số nguyên từ 1 đến 100.');
+    return null;
+  }
+  return qty;
+}
+function placeOrder(side) {
+  const qty = getQty();
+  if (qty === null) return;
+  if (positionQty !== 0) {
+    alert('Bạn đang có vị thế. Hãy đóng vị thế trước khi mở lệnh mới.');
+    return;
+  }
+  const required = currentPrice * CONTRACT_MULTIPLIER * qty / leverage;
+  if (required > balance) {
+    alert('Số dư vốn ảo không đủ ký quỹ cho lệnh này.');
+    return;
+  }
+  positionQty = side === 'BUY' ? qty : -qty;
+  entryPrice = currentPrice;
+  tradeCount++;
+  addHistory(`${side === 'BUY' ? 'MUA LONG' : 'BÁN SHORT'} ${qty} HĐ tại ${currentPrice.toFixed(2)}`);
+  updateUI();
+  notify(`Đã mở ${side === 'BUY' ? 'LONG' : 'SHORT'} ${qty} hợp đồng (mô phỏng).`);
+}
+function closePosition() {
+  if (positionQty === 0) { notify('Bạn chưa có vị thế để đóng.', 'warning'); return; }
+  const pnl = unrealizedPnL();
+  balance += pnl;
+  addHistory(`Đóng vị thế tại ${currentPrice.toFixed(2)} | ${pnl >= 0 ? 'Lãi ' : 'Lỗ '}${money(Math.abs(pnl))}`);
+  positionQty = 0;
+  entryPrice = 0;
+  if (balance <= 0) {
+    balance = 0;
+    notify('Vốn ảo đã hết trong phiên mô phỏng.', 'danger');
+  } else {
+    notify(`Đã đóng vị thế. Kết quả: ${pnl >= 0 ? '+' : '-'}${money(Math.abs(pnl))}`);
+  }
+  updateUI();
+}
+function resetSession() {
+  if (!confirm('Reset phiên mô phỏng trên trình duyệt về 100 triệu đồng? Thao tác này không reset tài khoản trên máy chủ.')) return;
+  balance = INITIAL_BALANCE;
+  positionQty = 0;
+  entryPrice = 0;
+  tradeCount = 0;
+  $('trade-history').textContent = 'Chưa có lệnh nào.';
+  updateUI();
+  notify('Đã reset phiên mô phỏng trên trình duyệt.');
+}
+function addHistory(message) {
+  const history = $('trade-history');
+  if (history.textContent === 'Chưa có lệnh nào.') history.textContent = '';
+  const row = document.createElement('div');
+  row.style.cssText = 'padding:8px 0;border-bottom:1px solid var(--line);color:#d7dbe2';
+  row.textContent = `${new Date().toLocaleTimeString('vi-VN')} — ${message}`;
+  history.prepend(row);
+}
+
+function initCandles() {
+  let p = 1292;
+  for (let i = 0; i < 45; i++) {
+    const open = p;
+    const close = open + (Math.random() - 0.49) * 4;
+    const high = Math.max(open, close) + Math.random() * 2;
+    const low = Math.min(open, close) - Math.random() * 2;
+    candles.push({ open, close, high, low });
+    p = close;
+  }
+  currentPrice = candles[candles.length - 1].close;
+  for (let i = 0; i < candles.length; i++) rsiValues.push(35 + Math.random() * 30);
+}
+function drawChart() {
+  const canvas = $('chart');
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+  canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const w = rect.width, h = rect.height;
+  ctx.clearRect(0, 0, w, h);
+  const values = candles.flatMap(c => [c.high, c.low]);
+  const max = Math.max(...values) + 2, min = Math.min(...values) - 2;
+  const pad = { l: 10, r: 55, t: 12, b: 20 };
+  const plotW = w - pad.l - pad.r, plotH = h - pad.t - pad.b;
+  const y = v => pad.t + (max - v) / (max - min) * plotH;
+  ctx.font = '11px Arial'; ctx.fillStyle = '#848e9c'; ctx.strokeStyle = '#2a2e39'; ctx.lineWidth = 1;
+  for (let i = 0; i < 5; i++) {
+    const yy = pad.t + i * plotH / 4;
+    ctx.beginPath(); ctx.moveTo(pad.l, yy); ctx.lineTo(w - pad.r, yy); ctx.stroke();
+    ctx.fillText((max - i * (max - min) / 4).toFixed(1), w - pad.r + 5, yy + 4);
+  }
+  const step = plotW / candles.length, bodyW = Math.max(2, step * .58);
+  candles.forEach((c, i) => {
+    const x = pad.l + i * step + step / 2;
+    const color = c.close >= c.open ? '#26a69a' : '#ef5350';
+    ctx.strokeStyle = color; ctx.fillStyle = color;
+    ctx.beginPath(); ctx.moveTo(x, y(c.high)); ctx.lineTo(x, y(c.low)); ctx.stroke();
+    const top = Math.min(y(c.open), y(c.close));
+    const bh = Math.max(1.5, Math.abs(y(c.open) - y(c.close)));
+    ctx.fillRect(x - bodyW / 2, top, bodyW, bh);
+  });
+  const lastY = y(currentPrice);
+  ctx.strokeStyle = '#f0b90b'; ctx.setLineDash([4, 3]);
+  ctx.beginPath(); ctx.moveTo(pad.l, lastY); ctx.lineTo(w - pad.r, lastY); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = '#f0b90b'; ctx.fillRect(w - pad.r + 1, lastY - 9, pad.r - 2, 18);
+  ctx.fillStyle = '#131722'; ctx.fillText(currentPrice.toFixed(2), w - pad.r + 4, lastY + 4);
+}
+function drawRSI() {
+  const canvas = $('rsi-chart');
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+  canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const w = rect.width, h = rect.height;
+  ctx.clearRect(0, 0, w, h);
+  const pad = {l:10,r:12,t:10,b:12}, pw=w-pad.l-pad.r, ph=h-pad.t-pad.b;
+  [30,50,70].forEach(v => {
+    const yy=pad.t+(100-v)/100*ph;
+    ctx.strokeStyle='#2a2e39';ctx.beginPath();ctx.moveTo(pad.l,yy);ctx.lineTo(w-pad.r,yy);ctx.stroke();
+    ctx.fillStyle='#848e9c';ctx.font='10px Arial';ctx.fillText(String(v),pad.l+2,yy-2);
+  });
+  ctx.strokeStyle='#f0b90b';ctx.lineWidth=1.5;ctx.beginPath();
+  rsiValues.forEach((v,i)=>{
+    const x=pad.l+i*pw/Math.max(1,rsiValues.length-1), y=pad.t+(100-v)/100*ph;
+    if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+}
+function tick() {
+  const previous = currentPrice;
+  const next = Math.max(100, previous + (Math.random() - 0.5) * 2.4);
+  const last = candles[candles.length - 1];
+  last.close = next; last.high = Math.max(last.high, next); last.low = Math.min(last.low, next);
+  // Add a new candle periodically; all prices are intentionally simulated.
+  if (Math.random() < 0.16) {
+    candles.push({open:next,close:next,high:next,low:next});
+    rsiValues.push(Math.max(5, Math.min(95, 50 + (Math.random() - 0.5) * 35)));
+    if (candles.length > 55) candles.shift();
+    if (rsiValues.length > 55) rsiValues.shift();
+  }
+  currentPrice = next;
+  drawChart();
+  drawRSI();
+  updateUI();
+}
+$('register-form').addEventListener('submit', handleRegister);
+$('buy-button').addEventListener('click', () => placeOrder('BUY'));
+$('sell-button').addEventListener('click', () => placeOrder('SELL'));
+$('close-button').addEventListener('click', closePosition);
+$('reset-button').addEventListener('click', resetSession);
+$('qty').addEventListener('input', calculateMargin);
+$('leverage-range').addEventListener('input', event => {
+  leverage = Number(event.target.value);
+  updateUI();
+});
+window.addEventListener('resize', () => { drawChart(); drawRSI(); });
+initCandles();
+updateUI();
+drawChart();
+drawRSI();
+setInterval(tick, 2500);
+</script>
+</body>
+</html>
