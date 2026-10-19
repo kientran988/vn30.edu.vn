@@ -52,11 +52,11 @@
 
     <div id="alert-box" class="alert-success">Thông báo!</div>
 
-    <!-- 🔒 Form Đăng ký -->
+    <!-- 🔒 Form Đăng ký chặn màn hình ban đầu -->
     <div id="auth-modal" class="modal-overlay">
         <div class="modal-box">
             <h2 style="text-align: center; color: #f0b90b; margin-top: 0; letter-spacing: 1px;">VN30.EDU.VN</h2>
-            <p style="text-align: center; font-size: 13px; color: #848e9c; margin-bottom: 25px;">Học Tập An Toàn - Thiết Lập Trạng Thái Dòng Chảy</p>
+            <p style="text-align: center; font-size: 13px; color: #848e9c; margin-bottom: 25px;">Học Tập An Toàn - Đua Top Giải Đấu Tuần</p>
             <div class="input-group">
                 <label>1. Tên hiển thị đua top:</label>
                 <input type="text" id="reg-name" placeholder="Ví dụ: CaoThuPhaiSinh">
@@ -107,7 +107,7 @@
                 <div class="info-row"><span>Số dư ví:</span> <span id="balance">100,000,000</span>đ</div>
                 <div class="info-row"><span>Vốn sở hữu (Equity):</span> <span id="equity">100,000,000</span>đ</div>
                 <div class="info-row"><span>Lãi/Lỗ tạm tính (PnL):</span> <span id="pnl" class="profit">0đ</span></div>
-                <div class="info-row"><span>Vị thế đang nắm giữ:</span> <span id="position" class="highlight">0 HĐ</span></div>
+                <div class="info-row"><span>Vị thế đang giữ:</span> <span id="position" class="highlight">0 HĐ</span></div>
 
                 <div id="control-area">
                     <h3 style="margin-top: 20px; border-top: 1px solid #2a2e39; padding-top: 15px;">⚡ VÀO LỆNH THỰC HÀNH</h3>
@@ -147,6 +147,6 @@
         let entryPrice = 0.0;
         let totalOrdersSent = 0;   
 
-        // FIXED LOGIC: SỬA LỖI KHÔNG VÀO ĐƯỢC BÊN TRONG TRÊN GITHUB ONLINE
-        async function handleRegister() {
+        // 🌟 BẺ KHÓA DỨT ĐIỂM: Cho user vào luôn, chạy đồng bộ ngầm ở phía sau
+        function handleRegister() {
             const name = document.getElementById('reg-name').value.trim();
