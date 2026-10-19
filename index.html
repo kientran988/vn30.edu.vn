@@ -107,7 +107,7 @@
                 <div class="info-row"><span>Số dư ví:</span> <span id="balance">100,000,000</span>đ</div>
                 <div class="info-row"><span>Vốn sở hữu (Equity):</span> <span id="equity">100,000,000</span>đ</div>
                 <div class="info-row"><span>Lãi/Lỗ tạm tính (PnL):</span> <span id="pnl" class="profit">0đ</span></div>
-                <div class="info-row"><span>Vị thế đang giữ:</span> <span id="position" class="highlight">0 HĐ</span></div>
+                <div class="info-row"><span>Vị thế đang nắm giữ:</span> <span id="position" class="highlight">0 HĐ</span></div>
 
                 <div id="control-area">
                     <h3 style="margin-top: 20px; border-top: 1px solid #2a2e39; padding-top: 15px;">⚡ VÀO LỆNH THỰC HÀNH</h3>
@@ -140,6 +140,7 @@
     </div>
 
     <script>
+        // Khởi tạo các giá trị an toàn ngay từ đầu để tránh lỗi "not defined"
         let currentPrice = 1300.0;
         let leverage = 10;
         let balance = 100000000.0; 
@@ -147,6 +148,5 @@
         let entryPrice = 0.0;
         let totalOrdersSent = 0;   
 
-        // 🌟 BẺ KHÓA DỨT ĐIỂM: Cho user vào luôn, chạy đồng bộ ngầm ở phía sau
+        // 🔥 HÀM ĐĂNG KÝ SIÊU CẤP - BẤM LÀ VÀO, BẤT CHẤP LỖI MẠNG HAY SERVER
         function handleRegister() {
-            const name = document.getElementById('reg-name').value.trim();
