@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>VN30.EDU.VN - Đấu Trường Phái Sinh Gamification</title>
-    <!-- 🌟 ĐÃ SỬA LỖI DÒNG NÀY: Nhúng chính xác thư viện nến mượt mà của TradingView -->
+    <!-- Nhúng chính xác thư viện nến mượt mà của TradingView -->
     <script src="https://unpkg.com"></script>
     <style>
         body { background-color: #131722; color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 20px; margin: 0; }
@@ -140,14 +140,14 @@
     </div>
 
     <script>
-        // Khởi tạo biến nền tảng cố định
+        // Khởi tạo các giá trị an toàn ngay từ đầu
         let currentPrice = 1300.0;
         let leverage = 10;
         let balance = 100000000.0; 
         let positionSize = 0;       
         let entryPrice = 0.0;
         let totalOrdersSent = 0;   
+        let isRegistered = false; // Cờ bảo vệ: Chặn lỗi tính toán khi chưa vào sàn
 
-        const API_BASE_URL = 'https://vn30-edu-vn.onrender.com';
+        const API_BASE_URL = 'https://onrender.com';
 
-        // 🛡️ LUỒNG ĐĂNG KÝ AN TOÀN TUYỆT ĐỐI - KHÔNG CHỜ MẠNG, KHÔNG LO LỖI THƯ VIỆN
