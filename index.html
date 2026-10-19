@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>VN30.EDU.VN - Đấu Trường Phái Sinh Gamification</title>
+    <!-- Nhúng thư viện biểu đồ nến chuyên nghiệp của TradingView -->
     <script src="https://unpkg.com"></script>
     <style>
         body { background-color: #131722; color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 20px; margin: 0; }
@@ -13,27 +14,29 @@
         #rsi-chart { width: 100%; height: 110px; background: #1c2030; border-radius: 8px; border: 1px solid #2a2e39; }
         .trade-panel { width: 30%; background: #1c2030; padding: 20px; border-radius: 8px; border: 1px solid #2a2e39; box-sizing: border-box;}
         
-        #alert-box { position: fixed; top: 20px; right: -350px; width: 300px; padding: 15px; border-radius: 8px; font-weight: bold; z-index: 10000; transition: right 0.4s ease; box-shadow: 0px 4px 15px rgba(0,0,0,0.5); }
+        /* 🔔 HỘP THOẠI NHẮC NHỞ SMART ALERT */
+        #alert-box { position: fixed; top: 20px; right: -350px; width: 300px; padding: 15px; border-radius: 8px; font-weight: bold; z-index: 10000; transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0px 4px 15px rgba(0,0,0,0.5); }
         .alert-success { background-color: #26a69a; color: white; border-left: 6px solid #004d40; }
         .alert-warning { background-color: #f0b90b; color: #131722; border-left: 6px solid #b78103; }
         .alert-danger { background-color: #ef5350; color: white; border-left: 6px solid #b71c1c; }
 
+        /* 🔒 FORM ĐĂNG KÝ CHẶN MÀN HÌNH */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(19, 23, 34, 0.98); z-index: 9999; display: flex; align-items: center; justify-content: center; }
         .modal-box { background: #1c2030; padding: 35px; border-radius: 12px; width: 340px; border: 1px solid #2a2e39; }
         .input-group { margin-bottom: 18px; }
         .input-group label { display: block; font-size: 13px; color: #848e9c; margin-bottom: 6px; }
         .input-group input { width: 93%; padding: 12px; background: #131722; border: 1px solid #2a2e39; color: white; border-radius: 6px; font-size: 15px; }
         
+        /* 🎮 ĐÁNH GIÁ NHIỆM VỤ */
         .quest-box { background: #131722; padding: 12px; border-radius: 6px; border: 1px solid #2a2e39; margin-bottom: 15px; }
         .progress-bar-bg { background: #2a2e39; width: 100%; height: 8px; border-radius: 4px; margin-top: 6px; overflow: hidden; }
         .progress-bar-fill { background: linear-gradient(90deg, #26a69a, #f0b90b); width: 0%; height: 100%; transition: width 0.3s ease; }
 
-        .btn { width: 100%; padding: 14px; margin: 8px 0; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; font-size: 16px; }
+        /* NÚT BẤM VÀ ĐÒN BẨY */
+        .btn { width: 100%; padding: 14px; margin: 8px 0; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; font-size: 16px; transition: 0.2s; }
         .btn-long { background-color: #26a69a; color: white; }
         .btn-short { background-color: #ef5350; color: white; }
         .btn-gold { background-color: #f0b90b; color: #131722; font-weight: 900; }
-        
-        /* 🕒 NÚT BÁO KHÓA GIẢI ĐẤU KHI CHÁY */
         .btn-locked { background: #2a2e39; color: #848e9c; cursor: not-allowed; display: none; font-size: 14px; border: 1px solid #ef5350; }
         
         .leverage-container { margin: 15px 0; background: #131722; padding: 12px; border-radius: 6px; border: 1px solid #2a2e39; }
@@ -49,16 +52,17 @@
 
     <div id="alert-box" class="alert-success">Thông báo!</div>
 
+    <!-- 🔒 Form Đăng ký -->
     <div id="auth-modal" class="modal-overlay">
         <div class="modal-box">
             <h2 style="text-align: center; color: #f0b90b; margin-top: 0; letter-spacing: 1px;">VN30.EDU.VN</h2>
-            <p style="text-align: center; font-size: 13px; color: #848e9c; margin-bottom: 25px;">Học Tập An Toàn - Đua Top Giải Đấu Tuần</p>
+            <p style="text-align: center; font-size: 13px; color: #848e9c; margin-bottom: 25px;">Học Tập An Toàn - Thiết Lập Trạng Thái Dòng Chảy</p>
             <div class="input-group">
                 <label>1. Tên hiển thị đua top:</label>
                 <input type="text" id="reg-name" placeholder="Ví dụ: CaoThuPhaiSinh">
             </div>
             <div class="input-group">
-                <label>2. Số điện thoại (Kết bạn Zalo trao giải):</label>
+                <label>2. Số điện thoại (Kết bạn Zalo nhận thưởng):</label>
                 <input type="tel" id="reg-phone" placeholder="Ví dụ: 0912345xxx">
             </div>
             <div class="input-group">
@@ -70,6 +74,7 @@
     </div>
 
     <div class="wrapper">
+        <!-- Header -->
         <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid #2a2e39;">
             <div style="display: flex; align-items: center; gap: 10px;">
                 <div style="background: linear-gradient(135deg, #26a69a, #f0b90b); width: 35px; height: 35px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 18px;">📊</div>
@@ -87,6 +92,7 @@
                 <div id="rsi-chart"></div>
             </div>
 
+            <!-- Bảng điều khiển Trading Panel -->
             <div class="trade-panel">
                 <h3 style="margin-top:0; color:#f0b90b;">👤 TRADER: <span id="user-display" style="color:white;">Ẩn danh</span></h3>
                 
@@ -101,9 +107,8 @@
                 <div class="info-row"><span>Số dư ví:</span> <span id="balance">100,000,000</span>đ</div>
                 <div class="info-row"><span>Vốn sở hữu (Equity):</span> <span id="equity">100,000,000</span>đ</div>
                 <div class="info-row"><span>Lãi/Lỗ tạm tính (PnL):</span> <span id="pnl" class="profit">0đ</span></div>
-                <div class="info-row"><span>Vị thế đang giữ:</span> <span id="position" class="highlight">0 HĐ</span></div>
+                <div class="info-row"><span>Vị thế đang nắm giữ:</span> <span id="position" class="highlight">0 HĐ</span></div>
 
-                <!-- Bảng điều khiển lệnh đặt -->
                 <div id="control-area">
                     <h3 style="margin-top: 20px; border-top: 1px solid #2a2e39; padding-top: 15px;">⚡ VÀO LỆNH THỰC HÀNH</h3>
                     <label style="font-size: 13px; color:#848e9c;">Số lượng hợp đồng (HĐ):</label>
@@ -118,7 +123,7 @@
                     </div>
 
                     <div class="info-row" style="border:none; margin-bottom:10px;">
-                        <span>Ký quỹ yêu cầu:</span>
+                        <span style="font-size: 13px; color:#848e9c;">Ký quỹ yêu cầu:</span>
                         <span id="required-margin" class="highlight">13,000,000đ</span>
                     </div>
 
@@ -126,7 +131,6 @@
                     <button class="btn btn-short" onclick="placeOrder('SELL')">BÁN SHORT ↓</button>
                 </div>
 
-                <!-- 🕒 NÚT KHÓA CHỜ RESET TUẦN MỚI (CHỈ XUẤT HIỆN KHI CHÁY) -->
                 <button id="btn-locked" class="btn btn-locked" disabled>
                     ❌ TÀI KHOẢN ĐÃ BỊ CHÁY<br>
                     <span style="font-size:12px; color:#ef5350;">Đợi Reset vốn vào Thứ Hai tuần sau!</span>
@@ -143,29 +147,6 @@
         let entryPrice = 0.0;
         let totalOrdersSent = 0;   
 
-           async function handleRegister() {
-    const name = document.getElementById('reg-name').value.trim();
-    const phone = document.getElementById('reg-phone').value.trim();
-    const pass = document.getElementById('reg-pass').value.trim();
-    if(!name || !phone || !pass) { alert("Vui lòng điền đủ 3 thông tin để nhận 100M VND ảo nhé!"); return; }
-    
-    try {
-        // ĐƯỜNG LINK THỰC TẾ CỦA BẠN ĐÃ ĐƯỢC DÁN CHUẨN XÁC Ở ĐÂY:
-        const response = await fetch('https://vn30-edu-vn.onrender.com', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: name, phone_zalo: phone, password: pass })
-        });
-        
-        const result = await response.json();
-        if(response.ok) {
-            document.getElementById('auth-modal').style.display = 'none';
-            document.getElementById('user-display').innerText = name;
-            showNotification('success', result.message);
-        } else {
-            alert(result.detail); 
-        }
-    } catch (err) {
-        alert("🚨 Hệ thống đang kết nối tới Máy chủ đám mây Render. Vui lòng đợi từ 30s - 1 phút cho Server khởi động lại (vì bạn đang dùng gói Free) rồi bấm lại nút đăng ký nhé!");
-    }
-}
+        // FIXED LOGIC: SỬA LỖI KHÔNG VÀO ĐƯỢC BÊN TRONG TRÊN GITHUB ONLINE
+        async function handleRegister() {
+            const name = document.getElementById('reg-name').value.trim();
