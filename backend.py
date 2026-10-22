@@ -1,27 +1,38 @@
+
 import os
 import re
 import hmac
-import secrets
+from pathlib import Path
 
 import bcrypt
 from fastapi import FastAPI, HTTPException, status, Header
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from supabase import create_client, Client
 import uvicorn
 
 app = FastAPI(title="VN30.EDU.VN - Core Engine Giải Đấu Phái Sinh")
 
+# Đường dẫn đến index.html nằm cùng thư mục với backend.py
+BASE_DIR = Path(__file__).resolve().parent
+INDEX_FILE = BASE_DIR / "index.html"
+
+
 # Configure FRONTEND_ORIGINS in Render, comma-separated.
-# Example: https://vn30.edu.vn,https://www.vn30.edu.vn
+# Example: https://vn30edu.vn,https://www.vn30edu.vn
 origins = [
     item.strip()
     for item in os.getenv("FRONTEND_ORIGINS", "").split(",")
     if item.strip()
 ]
 if not origins:
-    # Useful for local testing only; configure FRONTEND_ORIGINS in production.
-    origins = ["http://localhost:5500", "http://127.0.0.1:5500"]
+    origins = [
+        "https://vn30edu.vn",
+        "https://www.vn30edu.vn",
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+    ]
 
 app.add_middleware(
     CORSMiddleware,
@@ -31,13 +42,23 @@ app.add_middleware(
     allow_headers=["Content-Type", "X-Admin-Key"],
 )
 
-# In Render, set SUPABASE_URL to the project URL, e.g. https://xxxx.supabase.co
-# Set SUPABASE_KEY in Environment Variables. Do not hardcode secrets in source.
+
+# Trang chủ: hiển thị giao diện index.html
+@app.get("/", include_in_schema=False)
+def homepage():
+    if not INDEX_FILE.is_file():
+        raise HTTPException(
+            status_code=500,
+            detail="Không tìm thấy index.html. Hãy đặt index.html cùng thư mục với backend.py trong GitHub."
+        )
+    return FileResponse(INDEX_FILE, media_type="text/html")
+
+
+# In Render, set SUPABASE_URL and SUPABASE_KEY in Environment Variables.
 SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip().rstrip("/")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "").strip()
 
 if not SUPABASE_URL or not SUPABASE_KEY:
-    # Let the app boot so /health and /docs remain available; DB routes report a clear error.
     supabase: Client | None = None
 else:
     supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -74,12 +95,18 @@ def require_admin(x_admin_key: str | None) -> None:
             detail="ADMIN_API_KEY chưa được cấu hình trên Render."
         )
     if not x_admin_key or not hmac.compare_digest(x_admin_key, expected):
-        raise HTTPException(status_code=401, detail="Không có quyền thực hiện thao tác quản trị.")
+        raise HTTPException(
+            status_code=401,
+            detail="Không có quyền thực hiện thao tác quản trị."
+        )
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "database_configured": supabase is not None}
+    return {
+        "status": "ok",
+        "database_configured": supabase is not None
+    }
 
 
 @app.post("/api/v1/auth/register", status_code=status.HTTP_201_CREATED)
@@ -90,7 +117,10 @@ def register_trader(data: RegisterRequest):
     phone = data.phone_zalo.strip()
 
     if len(username) < 2:
-        raise HTTPException(status_code=422, detail="Tên hiển thị cần ít nhất 2 ký tự.")
+        raise HTTPException(
+            status_code=422,
+            detail="Tên hiển thị cần ít nhất 2 ký tự."
+        )
 
     try:
         existing_user = (
@@ -123,12 +153,14 @@ def register_trader(data: RegisterRequest):
         return {
             "status": "success",
             "message": "Đăng ký VN30 thành công! Bạn đã nhận 100 triệu VND vốn ảo.",
-            "data": {"username": username, "balance": INITIAL_BALANCE},
+            "data": {
+                "username": username,
+                "balance": INITIAL_BALANCE
+            },
         }
     except HTTPException:
         raise
     except Exception:
-        # Avoid returning database errors or internal configuration to public clients.
         raise HTTPException(
             status_code=500,
             detail="Không thể lưu tài khoản. Hãy kiểm tra cấu hình Supabase và bảng tournament_traders."
@@ -139,7 +171,10 @@ def register_trader(data: RegisterRequest):
 def get_trader_status(phone_zalo: str):
     """Return public trader status only; never expose password_hash."""
     if not re.fullmatch(r"[0-9]{10}", phone_zalo):
-        raise HTTPException(status_code=422, detail="Số điện thoại không hợp lệ.")
+        raise HTTPException(
+            status_code=422,
+            detail="Số điện thoại không hợp lệ."
+        )
 
     db = get_supabase()
     try:
@@ -151,12 +186,18 @@ def get_trader_status(phone_zalo: str):
             .execute()
         )
         if not result.data:
-            raise HTTPException(status_code=404, detail="Không tìm thấy tài khoản.")
+            raise HTTPException(
+                status_code=404,
+                detail="Không tìm thấy tài khoản."
+            )
         return result.data[0]
     except HTTPException:
         raise
     except Exception:
-        raise HTTPException(status_code=500, detail="Không thể đọc trạng thái tài khoản.")
+        raise HTTPException(
+            status_code=500,
+            detail="Không thể đọc trạng thái tài khoản."
+        )
 
 
 @app.post("/api/v1/trader/update-status")
@@ -164,10 +205,7 @@ def update_trader_status(
     data: UpdateBalanceRequest,
     x_admin_key: str | None = Header(default=None),
 ):
-    """
-    Admin/server-only endpoint. Do not call this from public browser JavaScript.
-    A production trading app should calculate and validate trades server-side.
-    """
+    """Admin/server-only endpoint. Do not call from public browser JavaScript."""
     require_admin(x_admin_key)
     db = get_supabase()
     try:
@@ -181,14 +219,26 @@ def update_trader_status(
             .execute()
         )
         if not result.data:
-            raise HTTPException(status_code=404, detail="Không tìm thấy tài khoản để cập nhật.")
+            raise HTTPException(
+                status_code=404,
+                detail="Không tìm thấy tài khoản để cập nhật."
+            )
         if data.is_liquidated:
-            return {"status": "locked", "message": "Tài khoản đã bị khóa do cháy vốn ảo."}
-        return {"status": "success", "message": "Đã đồng bộ số dư."}
+            return {
+                "status": "locked",
+                "message": "Tài khoản đã bị khóa do cháy vốn ảo."
+            }
+        return {
+            "status": "success",
+            "message": "Đã đồng bộ số dư."
+        }
     except HTTPException:
         raise
     except Exception:
-        raise HTTPException(status_code=500, detail="Không thể cập nhật trạng thái tài khoản.")
+        raise HTTPException(
+            status_code=500,
+            detail="Không thể cập nhật trạng thái tài khoản."
+        )
 
 
 @app.post("/api/v1/tournament/reset-weekly")
@@ -206,8 +256,16 @@ def reset_weekly_tournament(x_admin_key: str | None = Header(default=None)):
             "message": "Đã reset vốn ảo về 100 triệu VND cho mùa giải mới."
         }
     except Exception:
-        raise HTTPException(status_code=500, detail="Không thể reset giải đấu.")
+        raise HTTPException(
+            status_code=500,
+            detail="Không thể reset giải đấu."
+        )
 
 
 if __name__ == "__main__":
-    uvicorn.run("backend:app", host="0.0.0.0", port=int(os.getenv("PORT", "8000")))
+    uvicorn.run(
+        "backend:app",
+        host="0.0.0.0",
+        port=int(os.getenv("PORT", "8000"))
+    )
+
