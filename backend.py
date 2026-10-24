@@ -148,17 +148,15 @@ def register_trader(data: RegisterRequest):
             "balance": INITIAL_BALANCE,
             "is_liquidated": False,
         }
-        db.table("tournament_traders").insert(new_trader).execute()
+                db.table("tournament_traders").insert(new_trader).execute()
 
         return {
             "status": "success",
             "message": "Đăng ký VN30 thành công! Bạn đã nhận 100 triệu VND vốn ảo.",
-            "data": {
-                "username": username,
-                "balance": INITIAL_BALANCE
-            },
+            "data": {"username": username, "balance": INITIAL_BALANCE},
         }
-       except HTTPException:
+
+    except HTTPException:
         raise
     except Exception as e:
         import logging
