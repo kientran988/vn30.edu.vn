@@ -158,12 +158,14 @@ def register_trader(data: RegisterRequest):
                 "balance": INITIAL_BALANCE
             },
         }
-    except HTTPException:
+       except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        import logging
+        logging.exception("Lỗi đăng ký tài khoản VN30 khi ghi vào Supabase")
         raise HTTPException(
             status_code=500,
-            detail="Không thể lưu tài khoản. Hãy kiểm tra cấu hình Supabase và bảng tournament_traders."
+            detail=f"Lỗi lưu tài khoản: {str(e)}"
         )
 
 
