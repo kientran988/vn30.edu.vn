@@ -148,7 +148,7 @@ def register_trader(data: RegisterRequest):
             "balance": INITIAL_BALANCE,
             "is_liquidated": False,
         }
-                db.table("tournament_traders").insert(new_trader).execute()
+        db.table("tournament_traders").insert(new_trader).execute()
 
         return {
             "status": "success",
