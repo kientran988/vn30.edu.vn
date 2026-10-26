@@ -19,7 +19,13 @@ header{display:flex;align-items:center;justify-content:space-between;gap:16px;fl
 .chart-card,.trade-panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0}
 .chart-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 10px;font-size:14px}
 .chart-title small{color:var(--muted);font-weight:normal}
-canvas{display:block;width:100%;height:320px}.rsi-canvas{height:120px}
+canvas{display:block;width:100%;height:320px}
+.ma-controls{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:12px 0 4px}
+.ma-controls label{display:flex;align-items:center;gap:7px;color:var(--text);font-size:13px}
+.ma-controls input[type="number"]{width:76px;background:#0f131c;color:#f0f3fa;border:1px solid var(--line);border-radius:6px;padding:8px}
+.ma-toggle input{accent-color:#f0b90b}
+.ma-note{margin:8px 0 0;line-height:1.5}
+@media(max-width:600px){.ma-controls{gap:9px}.ma-controls label{font-size:12px}.ma-controls input[type="number"]{width:66px}}
 .trade-panel h3{margin:0 0 15px;color:var(--gold);font-size:17px}
 .quest-box{background:var(--bg);padding:12px;border-radius:7px;border:1px solid var(--line);margin-bottom:15px}
 .quest-top{display:flex;justify-content:space-between;gap:8px;color:var(--muted);font-size:12px}
@@ -79,19 +85,34 @@ footer{margin-top:18px;color:var(--muted);font-size:12px;line-height:1.6}
     <small>.VN</small>
   </div>
 </div>
-  <div class="price-line">Giá VN30 mô phỏng <span id="live-price" class="price">1300.00</span></div>
+  <div class="price-line">Giá VN30F1M mô phỏng <span id="live-price" class="price">1300.00</span></div>
 </header>
 <div class="notice"><strong>Chế độ học tập:</strong> Biểu đồ và giá trong file này là dữ liệu mô phỏng để thực hành, không phải báo giá VN30 thời gian thực. Số dư là vốn ảo, không phải tiền thật.</div>
+
+<section class="chart-card" style="margin-top:18px">
+  <h2 class="chart-title">Chỉ số VN30 từ DNSE <small>Widget thị trường bên ngoài</small></h2>
+  <p class="muted">Widget dưới đây được nhúng từ DNSE. Biểu đồ nến và lệnh mô phỏng bên dưới vẫn dùng dữ liệu mô phỏng; chưa được kết nối trực tiếp với giá trong widget.</p>
+  <div id="dnse-market-index" class="dnse-market-index" style="width:100%;overflow:hidden">
+    <script src="https://cdn.dnse.com.vn/dnse-price/_embed/embed-widget-1.2.4.js">{"indexes":["VN30"],"width":600,"height":320,"theme":"dark"}</script>
+  </div>
+</section>
 
 <div class="container">
   <main class="chart-area">
     <section class="chart-card">
-      <h2 class="chart-title">Biểu đồ nến VN30 <small id="chart-status">Dữ liệu mô phỏng</small></h2>
+      <h2 class="chart-title">Biểu đồ nến VN30F1M <small id="chart-status">Dữ liệu mô phỏng</small></h2>
       <canvas id="chart" aria-label="Biểu đồ nến mô phỏng"></canvas>
     </section>
     <section class="chart-card">
-      <h2 class="chart-title">RSI (mô phỏng) <small>Thang 0–100</small></h2>
-      <canvas id="rsi-chart" class="rsi-canvas" aria-label="Biểu đồ RSI mô phỏng"></canvas>
+      <h2 class="chart-title">Đường trung bình động (MA) <small>Tùy chỉnh</small></h2>
+      <div class="ma-controls">
+        <label class="ma-toggle"><input type="checkbox" id="ma1-enabled" checked> Hiện MA 1</label>
+        <label>Chu kỳ MA 1 <input type="number" id="ma1-period" min="2" max="200" value="20"></label>
+        <label class="ma-toggle"><input type="checkbox" id="ma2-enabled" checked> Hiện MA 2</label>
+        <label>Chu kỳ MA 2 <input type="number" id="ma2-period" min="2" max="200" value="50"></label>
+        <button type="button" class="btn btn-secondary" id="apply-ma">Áp dụng MA</button>
+      </div>
+      <p class="muted ma-note">Mặc định MA20 và MA50. Có thể đổi chu kỳ từ 2 đến 200 nến hoặc tắt từng đường. Cài đặt được lưu trên thiết bị này.</p>
     </section>
     <section class="chart-card">
       <h2 class="chart-title">Lịch sử lệnh trong phiên</h2>
@@ -144,7 +165,10 @@ let positionQty = 0; // positive = long, negative = short
 let entryPrice = 0;
 let tradeCount = 0;
 let candles = [];
-let rsiValues = [];
+let ma1Period = 20;
+let ma2Period = 50;
+let ma1Enabled = true;
+let ma2Enabled = true;
 let notificationTimer = null;
 
 const $ = (id) => document.getElementById(id);
@@ -332,7 +356,7 @@ function initCandles() {
     p = close;
   }
   currentPrice = candles[candles.length - 1].close;
-  for (let i = 0; i < candles.length; i++) rsiValues.push(35 + Math.random() * 30);
+
 }
 function drawChart() {
   const canvas = $('chart');
@@ -365,34 +389,31 @@ function drawChart() {
     const bh = Math.max(1.5, Math.abs(y(c.open) - y(c.close)));
     ctx.fillRect(x - bodyW / 2, top, bodyW, bh);
   });
+  // Vẽ MA theo giá đóng cửa của các nến đang hiển thị.
+  function drawMovingAverage(period, color) {
+    if (candles.length < period) return;
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.8;
+    let started = false;
+    for (let i = period - 1; i < candles.length; i++) {
+      let sum = 0;
+      for (let j = i - period + 1; j <= i; j++) sum += candles[j].close;
+      const avg = sum / period;
+      const x = pad.l + i * step + step / 2;
+      if (!started) { ctx.moveTo(x, y(avg)); started = true; }
+      else ctx.lineTo(x, y(avg));
+    }
+    if (started) ctx.stroke();
+  }
+  if (ma1Enabled) drawMovingAverage(ma1Period, '#f0b90b');
+  if (ma2Enabled) drawMovingAverage(ma2Period, '#4c9aff');
+
   const lastY = y(currentPrice);
   ctx.strokeStyle = '#f0b90b'; ctx.setLineDash([4, 3]);
   ctx.beginPath(); ctx.moveTo(pad.l, lastY); ctx.lineTo(w - pad.r, lastY); ctx.stroke(); ctx.setLineDash([]);
   ctx.fillStyle = '#f0b90b'; ctx.fillRect(w - pad.r + 1, lastY - 9, pad.r - 2, 18);
   ctx.fillStyle = '#131722'; ctx.fillText(currentPrice.toFixed(2), w - pad.r + 4, lastY + 4);
-}
-function drawRSI() {
-  const canvas = $('rsi-chart');
-  const rect = canvas.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = Math.max(1, Math.floor(rect.width * dpr));
-  canvas.height = Math.max(1, Math.floor(rect.height * dpr));
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-  const w = rect.width, h = rect.height;
-  ctx.clearRect(0, 0, w, h);
-  const pad = {l:10,r:12,t:10,b:12}, pw=w-pad.l-pad.r, ph=h-pad.t-pad.b;
-  [30,50,70].forEach(v => {
-    const yy=pad.t+(100-v)/100*ph;
-    ctx.strokeStyle='#2a2e39';ctx.beginPath();ctx.moveTo(pad.l,yy);ctx.lineTo(w-pad.r,yy);ctx.stroke();
-    ctx.fillStyle='#848e9c';ctx.font='10px Arial';ctx.fillText(String(v),pad.l+2,yy-2);
-  });
-  ctx.strokeStyle='#f0b90b';ctx.lineWidth=1.5;ctx.beginPath();
-  rsiValues.forEach((v,i)=>{
-    const x=pad.l+i*pw/Math.max(1,rsiValues.length-1), y=pad.t+(100-v)/100*ph;
-    if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
-  });
-  ctx.stroke();
 }
 function tick() {
   const previous = currentPrice;
@@ -408,7 +429,7 @@ function tick() {
   }
   currentPrice = next;
   drawChart();
-  drawRSI();
+
   updateUI();
 }
 $('register-form').addEventListener('submit', handleRegister);
@@ -421,11 +442,48 @@ $('leverage-range').addEventListener('input', event => {
   leverage = Number(event.target.value);
   updateUI();
 });
-window.addEventListener('resize', () => { drawChart(); drawRSI(); });
+function readMAPreferences() {
+  const p1 = Number($('ma1-period').value);
+  const p2 = Number($('ma2-period').value);
+  if (!Number.isInteger(p1) || p1 < 2 || p1 > 200 ||
+      !Number.isInteger(p2) || p2 < 2 || p2 > 200) {
+    notify('Chu kỳ MA phải là số nguyên từ 2 đến 200.', 'warning');
+    return false;
+  }
+  ma1Period = p1;
+  ma2Period = p2;
+  ma1Enabled = $('ma1-enabled').checked;
+  ma2Enabled = $('ma2-enabled').checked;
+  try {
+    localStorage.setItem('vn30edu-ma-settings', JSON.stringify({
+      ma1Period, ma2Period, ma1Enabled, ma2Enabled
+    }));
+  } catch (_) {}
+  drawChart();
+  notify('Đã cập nhật cài đặt đường MA.');
+  return true;
+}
+$('apply-ma').addEventListener('click', readMAPreferences);
+['ma1-enabled', 'ma2-enabled'].forEach(id => {
+  $(id).addEventListener('change', readMAPreferences);
+});
+try {
+  const savedMA = JSON.parse(localStorage.getItem('vn30edu-ma-settings') || 'null');
+  if (savedMA) {
+    ma1Period = Number(savedMA.ma1Period) || 20;
+    ma2Period = Number(savedMA.ma2Period) || 50;
+    ma1Enabled = savedMA.ma1Enabled !== false;
+    ma2Enabled = savedMA.ma2Enabled !== false;
+    $('ma1-period').value = ma1Period;
+    $('ma2-period').value = ma2Period;
+    $('ma1-enabled').checked = ma1Enabled;
+    $('ma2-enabled').checked = ma2Enabled;
+  }
+} catch (_) {}
+window.addEventListener('resize', () => { drawChart(); });
 initCandles();
 updateUI();
 drawChart();
-drawRSI();
 setInterval(tick, 2500);
 </script>
 </body>
