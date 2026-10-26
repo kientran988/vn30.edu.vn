@@ -179,6 +179,7 @@ let positionQty = 0; // positive = long, negative = short
 let entryPrice = 0;
 let tradeCount = 0;
 let candles = [];
+let baseCandles = []; // Nến mô phỏng gốc theo từng phút; các khung khác được gộp từ dữ liệu này.
 // Khung thời gian đang chọn và độ dài mỗi nến (dữ liệu mô phỏng).
 let selectedTimeframe = '1m';
 const timeframeMs = {
@@ -369,26 +370,42 @@ function addHistory(message) {
 }
 
 function initCandles() {
+  baseCandles = [];
   let p = 1292;
-  const interval = timeframeMs[selectedTimeframe];
-  const now = Date.now();
-  for (let i = 0; i < 45; i++) {
+  const minute = timeframeMs['1m'];
+  const now = Math.floor(Date.now() / minute) * minute;
+  // Tạo 240 nến 1 phút giả lập làm dữ liệu gốc để có thể gộp thành các khung lớn hơn.
+  for (let i = 239; i >= 0; i--) {
     const open = p;
     const close = open + (Math.random() - 0.49) * 4;
     const high = Math.max(open, close) + Math.random() * 2;
     const low = Math.min(open, close) - Math.random() * 2;
-    candles.push({ open, close, high, low, time: now - (44 - i) * interval });
+    baseCandles.push({ open, close, high, low, time: now - i * minute });
     p = close;
   }
-  currentPrice = candles[candles.length - 1].close;
+  currentPrice = baseCandles[baseCandles.length - 1].close;
+  rebuildCandlesForTimeframe();
+}
+function rebuildCandlesForTimeframe() {
+  const interval = timeframeMs[selectedTimeframe];
+  const grouped = new Map();
+  for (const c of baseCandles) {
+    const bucket = Math.floor(c.time / interval) * interval;
+    const existing = grouped.get(bucket);
+    if (!existing) {
+      grouped.set(bucket, { open: c.open, close: c.close, high: c.high, low: c.low, time: bucket });
+    } else {
+      existing.close = c.close;
+      existing.high = Math.max(existing.high, c.high);
+      existing.low = Math.min(existing.low, c.low);
+    }
+  }
+  candles = Array.from(grouped.values()).slice(-60);
 }
 function setTimeframe(tf) {
   if (!timeframeMs[tf]) return;
   selectedTimeframe = tf;
-  const interval = timeframeMs[tf];
-  const now = Date.now();
-  // Gắn lại mốc thời gian cho nến mô phỏng theo khung được chọn.
-  candles.forEach((c, i) => { c.time = now - (candles.length - 1 - i) * interval; });
+  rebuildCandlesForTimeframe();
   document.querySelectorAll('[data-timeframe]').forEach(button => {
     const active = button.dataset.timeframe === tf;
     button.classList.toggle('active', active);
@@ -474,21 +491,21 @@ function drawChart() {
 function tick() {
   const previous = currentPrice;
   const next = Math.max(100, previous + (Math.random() - 0.5) * 2.4);
-  const last = candles[candles.length - 1];
-  last.close = next; last.high = Math.max(last.high, next); last.low = Math.min(last.low, next);
-  // Add a new candle periodically; all prices are intentionally simulated.
-  const interval = timeframeMs[selectedTimeframe];
-  const candleStart = Math.floor(Date.now() / interval) * interval;
-  const lastCandleStart = Math.floor((last.time || Date.now()) / interval) * interval;
-  if (candleStart > lastCandleStart) {
-    candles.push({open:next,close:next,high:next,low:next,time:candleStart});
-    rsiValues.push(Math.max(5, Math.min(95, 50 + (Math.random() - 0.5) * 35)));
-    if (candles.length > 55) candles.shift();
-    if (rsiValues.length > 55) rsiValues.shift();
+  const minute = timeframeMs['1m'];
+  const candleStart = Math.floor(Date.now() / minute) * minute;
+  let lastBase = baseCandles[baseCandles.length - 1];
+  if (!lastBase || candleStart > lastBase.time) {
+    baseCandles.push({ open: next, close: next, high: next, low: next, time: candleStart });
+    if (baseCandles.length > 600) baseCandles.shift();
+  } else {
+    lastBase.close = next;
+    lastBase.high = Math.max(lastBase.high, next);
+    lastBase.low = Math.min(lastBase.low, next);
   }
   currentPrice = next;
+  // Mỗi lần giá mô phỏng cập nhật, gộp lại nến theo khung đang chọn.
+  rebuildCandlesForTimeframe();
   drawChart();
-
   updateUI();
 }
 $('register-form').addEventListener('submit', handleRegister);
