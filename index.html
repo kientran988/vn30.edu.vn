@@ -20,6 +20,11 @@ header{display:flex;align-items:center;justify-content:space-between;gap:16px;fl
 .chart-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 10px;font-size:14px}
 .chart-title small{color:var(--muted);font-weight:normal}
 canvas{display:block;width:100%;height:320px}
+.timeframe-bar{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin:0 0 10px}
+.timeframe-label{font-size:12px;color:var(--muted);margin-right:4px}
+.timeframe-btn{background:#0f131c;color:#c5cad3;border:1px solid var(--line);border-radius:5px;padding:7px 11px;font-size:12px;cursor:pointer}
+.timeframe-btn.active{background:var(--gold);border-color:var(--gold);color:#131722;font-weight:bold}
+.timeframe-note{margin:6px 0 0}
 .ma-controls{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:12px 0 4px}
 .ma-controls label{display:flex;align-items:center;gap:7px;color:var(--text);font-size:13px}
 .ma-controls input[type="number"]{width:76px;background:#0f131c;color:#f0f3fa;border:1px solid var(--line);border-radius:6px;padding:8px}
@@ -101,7 +106,16 @@ footer{margin-top:18px;color:var(--muted);font-size:12px;line-height:1.6}
   <main class="chart-area">
     <section class="chart-card">
       <h2 class="chart-title">Biểu đồ nến VN30F1M <small id="chart-status">Dữ liệu mô phỏng</small></h2>
-      <canvas id="chart" aria-label="Biểu đồ nến mô phỏng"></canvas>
+      <div class="timeframe-bar" aria-label="Chọn khung thời gian cho biểu đồ nến">
+        <span class="timeframe-label">Khung thời gian:</span>
+        <button type="button" class="timeframe-btn active" data-timeframe="1m">1 phút</button>
+        <button type="button" class="timeframe-btn" data-timeframe="5m">5 phút</button>
+        <button type="button" class="timeframe-btn" data-timeframe="15m">15 phút</button>
+        <button type="button" class="timeframe-btn" data-timeframe="1h">1 giờ</button>
+        <button type="button" class="timeframe-btn" data-timeframe="1d">1 ngày</button>
+      </div>
+      <canvas id="chart" aria-label="Biểu đồ nến mô phỏng theo khung thời gian đã chọn"></canvas>
+      <p class="muted timeframe-note">Khung thời gian áp dụng trực tiếp cho biểu đồ nến bên trên. Dữ liệu hiện vẫn là mô phỏng.</p>
     </section>
     <section class="chart-card">
       <h2 class="chart-title">Đường trung bình động (MA) <small>Tùy chỉnh</small></h2>
@@ -347,16 +361,31 @@ function addHistory(message) {
 
 function initCandles() {
   let p = 1292;
+  const interval = timeframeMs[selectedTimeframe];
+  const now = Date.now();
   for (let i = 0; i < 45; i++) {
     const open = p;
     const close = open + (Math.random() - 0.49) * 4;
     const high = Math.max(open, close) + Math.random() * 2;
     const low = Math.min(open, close) - Math.random() * 2;
-    candles.push({ open, close, high, low });
+    candles.push({ open, close, high, low, time: now - (44 - i) * interval });
     p = close;
   }
   currentPrice = candles[candles.length - 1].close;
-
+}
+function setTimeframe(tf) {
+  if (!timeframeMs[tf]) return;
+  selectedTimeframe = tf;
+  const interval = timeframeMs[tf];
+  const now = Date.now();
+  // Gắn lại mốc thời gian cho nến mô phỏng theo khung được chọn.
+  candles.forEach((c, i) => { c.time = now - (candles.length - 1 - i) * interval; });
+  document.querySelectorAll('[data-timeframe]').forEach(button => {
+    const active = button.dataset.timeframe === tf;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+  drawChart();
 }
 function drawChart() {
   const canvas = $('chart');
@@ -370,7 +399,7 @@ function drawChart() {
   ctx.clearRect(0, 0, w, h);
   const values = candles.flatMap(c => [c.high, c.low]);
   const max = Math.max(...values) + 2, min = Math.min(...values) - 2;
-  const pad = { l: 10, r: 55, t: 12, b: 20 };
+  const pad = { l: 10, r: 55, t: 12, b: 34 };
   const plotW = w - pad.l - pad.r, plotH = h - pad.t - pad.b;
   const y = v => pad.t + (max - v) / (max - min) * plotH;
   ctx.font = '11px Arial'; ctx.fillStyle = '#848e9c'; ctx.strokeStyle = '#2a2e39'; ctx.lineWidth = 1;
@@ -389,6 +418,24 @@ function drawChart() {
     const bh = Math.max(1.5, Math.abs(y(c.open) - y(c.close)));
     ctx.fillRect(x - bodyW / 2, top, bodyW, bh);
   });
+  // Hiển thị mốc thời gian ngay dưới trục X của biểu đồ nến.
+  ctx.fillStyle = '#848e9c';
+  ctx.font = '10px Arial';
+  const labelCount = Math.min(5, candles.length);
+  for (let k = 0; k < labelCount; k++) {
+    const i = Math.round(k * (candles.length - 1) / Math.max(1, labelCount - 1));
+    const c = candles[i];
+    const date = new Date(c.time || Date.now());
+    let label;
+    if (selectedTimeframe === '1d') label = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+    else if (selectedTimeframe === '1h') label = date.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit' });
+    else label = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    const x = pad.l + i * step + step / 2;
+    ctx.textAlign = k === 0 ? 'left' : (k === labelCount - 1 ? 'right' : 'center');
+    ctx.fillText(label, x, h - 8);
+  }
+  ctx.textAlign = 'left';
+
   // Vẽ MA theo giá đóng cửa của các nến đang hiển thị.
   function drawMovingAverage(period, color) {
     if (candles.length < period) return;
@@ -421,8 +468,11 @@ function tick() {
   const last = candles[candles.length - 1];
   last.close = next; last.high = Math.max(last.high, next); last.low = Math.min(last.low, next);
   // Add a new candle periodically; all prices are intentionally simulated.
-  if (Math.random() < 0.16) {
-    candles.push({open:next,close:next,high:next,low:next});
+  const interval = timeframeMs[selectedTimeframe];
+  const candleStart = Math.floor(Date.now() / interval) * interval;
+  const lastCandleStart = Math.floor((last.time || Date.now()) / interval) * interval;
+  if (candleStart > lastCandleStart) {
+    candles.push({open:next,close:next,high:next,low:next,time:candleStart});
     rsiValues.push(Math.max(5, Math.min(95, 50 + (Math.random() - 0.5) * 35)));
     if (candles.length > 55) candles.shift();
     if (rsiValues.length > 55) rsiValues.shift();
@@ -464,6 +514,9 @@ function readMAPreferences() {
   return true;
 }
 $('apply-ma').addEventListener('click', readMAPreferences);
+document.querySelectorAll('[data-timeframe]').forEach(button => {
+  button.addEventListener('click', () => setTimeframe(button.dataset.timeframe));
+});
 ['ma1-enabled', 'ma2-enabled'].forEach(id => {
   $(id).addEventListener('change', readMAPreferences);
 });
